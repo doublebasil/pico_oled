@@ -20,7 +20,11 @@ int main( void )
      * GPIO 16            | DC
      * GPIO 20            | RST
      */
-	oled_init( 19, 18, 17, 16, 20, 0, 14000000U );
+	if( oled_init( 19, 18, 17, 16, 20, 0, 14000000U ) != 0 )
+    {
+        printf( "oled_init failed\n" );
+        return 1;
+    }
 
     oled_test();
 
@@ -30,4 +34,3 @@ int main( void )
         sleep_ms( 1000 );
     }
 }
-
