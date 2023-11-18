@@ -22,16 +22,12 @@ cmake -DPICO_BOARD=pico -B build && \
 make -j $(getconf _NPROCESSORS_ONLN) -C build && \
 compile_successful=true
 
-echo compile_successful=$compile_successful
-
 if [ "$compile_successful" = false ]; then
     # Delete the build folder and try again
-    echo DELETING BUILD FOLDER AND RETRYING
-    gio trash build/
-    cmake -DPICO_BOARD=pico -B build && \
-    make -j $(getconf _NPROCESSORS_ONLN) -C build && \
-    compile_successful=true
+    echo If issues persist, consider deleting build folder and retrying
 fi
+
+echo compile_successful=$compile_successful
 
 # If user runs ./compile u then follow up by running the upload script
 if [ "$compile_successful" = true ] && [ "$1" = "u" ]; then

@@ -1,6 +1,6 @@
 add_executable(${PROJECT_NAME}
     main.cpp
-    oled/oled.c
+    oled/oled.cpp
     )
 
 # Adding a directory here means anything within this project can include it
@@ -12,6 +12,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 target_link_libraries(${PROJECT_NAME}
     pico_stdlib
+    hardware_spi
     )
 
 # Enable USB and UART for serial output

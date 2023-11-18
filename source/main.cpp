@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <stdint.h>
 
 #include "pico/stdlib.h"
 
-#include "oled.h"
+#include "oled.hpp"
 
 int main( void )
 {
@@ -11,7 +12,17 @@ int main( void )
     // Wait for the stdio to initialise
     sleep_ms( 800U );
 
-	printf( "Initialised\n" );
+    /* PICO               | Display
+     * -----------------------------
+     * GPIO 19 (SPI0 TX)  | DIN
+     * GPIO 18 (SPI0 SCK) | CLK
+     * GPIO 17            | CS
+     * GPIO 16            | DC
+     * GPIO 20            | RST
+     */
+	oled_init( 19, 18, 17, 16, 20, 0, 14000000U );
+
+    oled_test();
 
     for( ;; ) 
     {
