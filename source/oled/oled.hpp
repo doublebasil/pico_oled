@@ -3,11 +3,11 @@
 
 /* Settings for this module ------------------------------------------------ */
 #define OLED_INCLUDE_TEST_FUNCTION      ( 1 )
-#define OLED_INCLUDE_FONT8              ( 1 )
-// #define OLED_INCLUDE_FONT12             ( 1 )
-// #define OLED_INCLUDE_FONT16             ( 1 )
-// #define OLED_INCLUDE_FONT20             ( 1 )
-// #define OLED_INCLUDE_FONT24             ( 1 )
+// #define OLED_INCLUDE_FONT8              ( 1 ) // Uses ~760 bytes
+#define OLED_INCLUDE_FONT12             ( 1 ) // Uses ~1144 bytes
+// #define OLED_INCLUDE_FONT16             ( 1 ) // Uses ~3044 bytes
+// #define OLED_INCLUDE_FONT20             ( 1 ) // Uses ~3804 bytes
+// #define OLED_INCLUDE_FONT24             ( 1 ) // Uses ~6844 bytes
 
 #include <stdint.h>
 
@@ -68,6 +68,13 @@ void oled_test( void );
 #endif /* OLED_INCLUDE_TEST_FUNCTION */
 
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
+#define OLED_FONT8_WIDTH                ( 5 )
+#define OLED_FONT12_WIDTH               ( 7 )
+#define OLED_FONT16_WIDTH               ( 11 )
+#define OLED_FONT20_WIDTH               ( 14 )
+#define OLED_FONT24_WIDTH               ( 17 )
+#define OLED_WRITE_TEXT_CHARACTER_GAP   ( 1 ) // Number of pixels between character
+
 /*
  * Function: oled_writeChar
  * --------------------
@@ -77,10 +84,28 @@ void oled_test( void );
  * y: y coordinate of the top left position for the glyph
  * asciiCharacter: Character to be printed at specified position
  * fontSize: Height of character in pixels, can be 8, 12, 16, 20 or 24
+ * colour: Character colour in RGB565 format
  *
  * returns: void
  */
 void oled_writeChar( uint8_t x, uint8_t y, char asciiCharacter, uint8_t fontSize, uint16_t colour );
+
+/*
+ * Function: oled_writeText
+ * --------------------
+ * Print a character array to the display.
+ *
+ * xStartPos: Display x coordinate of the top left of the first character to be written
+ * yStartPos: Display y coordinate of the top left of the first character to be written
+ * arrayStart: Pointer to the start of the character array
+ * arraySize: Number of elements in the character array
+ * fontSize: Height of text in pixels, can be 8, 12, 16, 20 or 24
+ * colour: Text colour in RGB565 format
+ *
+ * returns: void
+ */
+void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, char* arrayStart, uint8_t arraySize, uint8_t fontSize, uint16_t colour );
+
 #endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
 
 #endif /* OLED_HPP */

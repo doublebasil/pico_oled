@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "pico/stdlib.h"
 
@@ -28,12 +29,15 @@ int main( void )
 
     // oled_test();
     
-    for( char c = 32; c < 127; ++c )
-    {
-        oled_clear();
-        oled_writeChar( 10U, 10U, c, 8U, 0xFFFF );
-        sleep_ms( 500U );
-    }
+    // for( char c = 32; c < 127; ++c )
+    // {
+    //     oled_clear();
+    //     oled_writeChar( 10U, 10U, c, 16U, 0xFFFF );
+    //     sleep_ms( 500U );
+    // }
+
+    char text[] = "Hello, world!";
+    oled_writeText( 0U, 0U, &text[0], (uint8_t) sizeof(text) / sizeof(text[0]), 12, 0xFFFFU );
 
     for( ;; ) 
     {

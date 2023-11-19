@@ -214,9 +214,15 @@ void oled_writeChar( uint8_t x, uint8_t y, char character, uint8_t fontSize, uin
 {
     tFontTable fontTable;
 
-    if( character < 32 )
+    if( ( character < 32 ) || ( character > ( 32 + 95 ) ) )
     {
-        // Invalid ascii character
+        // Invalid ascii character, draw a blank character
+        character = 32;
+    }
+
+    if( ( x < 0 ) || ( x > m_displayWidth ) || ( y < 0 ) || ( y > m_displayHeight ) )
+    {
+        // Out of display bounds
         return;
     }
 
@@ -266,12 +272,13 @@ void oled_writeChar( uint8_t x, uint8_t y, char character, uint8_t fontSize, uin
     }
 
     // Write the character
-    // printf( "fontTable.Height=%d\n", fontTable.Height );
-    // printf( "asciiCharacter=%d\n", asciiCharacter );
 
-    char asciiCharacter = character - 32;
-    uint16_t arrayPosition = fontTable.Height * (uint16_t) asciiCharacter;
-    printf( "arrayPosition=%d\n", arrayPosition );
+    // Calculate the width of a character in bytes
+    uint16_t characterByteWidth = ( fontTable.Width / 8 ) + 1;
+    // Find starting position in the array. Note that the first 32 characters of
+    // ascii aren't human readable
+    uint16_t arrayPosition = fontTable.Height * characterByteWidth * (uint16_t) ( character - 32 );
+    // bitPosition records the position within each byte
     uint8_t bitPosition;
     for( uint8_t yChar = 0U; yChar < fontTable.Height; ++yChar )
     {
@@ -280,16 +287,48 @@ void oled_writeChar( uint8_t x, uint8_t y, char character, uint8_t fontSize, uin
         {
             if( ( fontTable.table[arrayPosition] & ( 0b10000000 >> bitPosition ) ) != 0 )
                 oled_setPixel( x + xChar, y + yChar, colour );
-            
-            // printf( "bp=%d, ap=%d\n", bitPosition, arrayPosition );
+
             ++bitPosition;
+            if( bitPosition == 8 )
+            {
+                ++arrayPosition;
+                bitPosition = 0;
+            }
         }
         ++arrayPosition;
     }
-    // for ( ;; ) {}
-
 }
 #endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
+
+void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, char* arrayStart, uint8_t arraySize, uint8_t fontSize, uint16_t colour )
+{
+    char* arrayPtr = arrayStart;
+    uint8_t xCurrentTextPosition = xStartPos;
+    uint8_t yCurrentTextPosition = yStartPos;
+    uint8_t characterWidth;
+    if( fontSize == 8U )
+        characterWidth = OLED_FONT8_WIDTH;
+    else if( fontSize == 12U )
+        characterWidth = OLED_FONT12_WIDTH;
+    else if( fontSize == 16U )
+        characterWidth = OLED_FONT16_WIDTH;
+    else if( fontSize == 20U )
+        characterWidth = OLED_FONT20_WIDTH;
+    else if( fontSize == 24U )
+        characterWidth = OLED_FONT24_WIDTH;
+    else
+    {
+        // Unsupported font size
+        return;
+    }
+
+    for( uint8_t arrayPosition = 0U; arrayPosition < arraySize; ++arrayPosition )
+    {
+        oled_writeChar( xCurrentTextPosition, yCurrentTextPosition, *arrayPtr, fontSize, colour );
+        ++arrayPtr;
+        xCurrentTextPosition += characterWidth + OLED_WRITE_TEXT_CHARACTER_GAP;
+    }
+}
 
 static inline void m_displayInit( void )
 {

@@ -1,4 +1,6 @@
-Add fonts/text support
+Fix the damn font code its buggered
+
+Add support for writing multiple characters
 
 Don't let the user set pixels outside of the display boundaries
 
