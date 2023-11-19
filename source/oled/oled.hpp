@@ -18,7 +18,20 @@
  * returns: void
  */
 int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin, 
-    int8_t rstPin, int8_t spiOutput, unsigned int baudrate );
+    int8_t rstPin, int8_t spiOutput, unsigned int baudrate, uint8_t displayWidth,
+    uint8_t displayHeight );
+
+
+/*
+ * Function: oled_clear
+ * --------------------
+ * Removes everything on the screen, setting every pixel to black
+ *
+ * parameters: none
+ *
+ * returns: void
+ */
+void oled_clear( void );
 
 /*
 Fill the screen with something to test the display
