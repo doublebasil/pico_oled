@@ -1,5 +1,9 @@
 Add fonts/text support
 
+Don't let the user set pixels outside of the display boundaries
+
+Find the size of the fonttables and write it in the header files
+
 Add image support
 
 Add QR generation

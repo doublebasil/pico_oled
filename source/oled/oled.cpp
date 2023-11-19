@@ -1,16 +1,26 @@
 #include "oled.hpp"
 
+#include <stdio.h> // Just for debugging
+
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
 #include "hardware/spi.h"
 
+#ifdef OLED_INCLUDE_FONT8
 #include "font8.h"
-
-static inline void m_displayInit( void );
-static inline void m_chipSelect( void );
-static inline void m_chipDeselect( void );
-static inline void m_writeReg( uint8_t reg );
-static inline void m_writeData( uint8_t data );
+#endif /* OLED_INCLUDE_FONT8 */
+#ifdef OLED_INCLUDE_FONT12
+#include "font12.h"
+#endif /* OLED_INCLUDE_FONT12 */
+#ifdef OLED_INCLUDE_FONT16
+#include "font16.h"
+#endif /* OLED_INCLUDE_FONT16 */
+#ifdef OLED_INCLUDE_FONT20
+#include "font20.h"
+#endif /* OLED_INCLUDE_FONT20 */
+#ifdef OLED_INCLUDE_FONT24
+#include "font24.h"
+#endif /* OLED_INCLUDE_FONT24 */
 
 static int8_t m_csPin;
 static int8_t m_dcPin;
@@ -18,6 +28,12 @@ static int8_t m_rstPin;
 static int8_t m_spiInstance;
 static uint8_t m_displayWidth;
 static uint8_t m_displayHeight;
+
+static inline void m_displayInit( void );
+static inline void m_chipSelect( void );
+static inline void m_chipDeselect( void );
+static inline void m_writeReg( uint8_t reg );
+static inline void m_writeData( uint8_t data );
 
 // Initialise GPIO and SPI
 int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin, 
@@ -120,6 +136,25 @@ void oled_clear( void )
     m_chipDeselect();
 }
 
+void oled_setPixel( uint8_t x, uint8_t y, uint16_t colour )
+{
+    m_chipSelect();
+
+    m_writeReg(0x15);
+    m_writeData(x);
+    m_writeData(x);
+    m_writeReg(0x75);
+    m_writeData(y);
+    m_writeData(y);
+    m_writeReg(0x5C);   
+    
+    // The 16 bits are sent in two bytes
+    m_writeData(colour >> 8);
+    m_writeData(colour);
+
+    m_chipDeselect();
+}
+
 #ifdef OLED_INCLUDE_TEST_FUNCTION
 void oled_test( void ) // Needs rewriting
 {
@@ -173,6 +208,88 @@ void oled_test( void ) // Needs rewriting
     
 }
 #endif /* OLED_INCLUDE_TEST_FUNCTION */
+
+#if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
+void oled_writeChar( uint8_t x, uint8_t y, char character, uint8_t fontSize, uint16_t colour )
+{
+    tFontTable fontTable;
+
+    if( character < 32 )
+    {
+        // Invalid ascii character
+        return;
+    }
+
+    switch( fontSize )
+    {
+#ifdef OLED_INCLUDE_FONT8
+        case 8U:
+        {
+            fontTable = Font8;
+        }
+        break;
+#endif /* OLED_INCLUDE_FONT8 */
+#ifdef OLED_INCLUDE_FONT12
+        case 12U:
+        {
+            fontTable = Font12;
+        }
+        break;
+#endif /* OLED_INCLUDE_FONT12 */
+#ifdef OLED_INCLUDE_FONT16
+        case 16U:
+        {
+            fontTable = Font16;
+        }
+        break;
+#endif /* OLED_INCLUDE_FONT16 */
+#ifdef OLED_INCLUDE_FONT20
+        case 20U:
+        {
+            fontTable = Font20;
+        }
+        break;
+#endif /* OLED_INCLUDE_FONT20 */
+#ifdef OLED_INCLUDE_FONT24
+        case 24U:
+        {
+            fontTable = Font24;
+        }
+        break;
+#endif /* OLED_INCLUDE_FONT24 */
+        default:
+        {
+            // Do nothing, font height not supported
+            return;
+        }
+        break;
+    }
+
+    // Write the character
+    // printf( "fontTable.Height=%d\n", fontTable.Height );
+    // printf( "asciiCharacter=%d\n", asciiCharacter );
+
+    char asciiCharacter = character - 32;
+    uint16_t arrayPosition = fontTable.Height * (uint16_t) asciiCharacter;
+    printf( "arrayPosition=%d\n", arrayPosition );
+    uint8_t bitPosition;
+    for( uint8_t yChar = 0U; yChar < fontTable.Height; ++yChar )
+    {
+        bitPosition = 0;
+        for( uint8_t xChar = 0U; xChar < fontTable.Width; ++xChar )
+        {
+            if( ( fontTable.table[arrayPosition] & ( 0b10000000 >> bitPosition ) ) != 0 )
+                oled_setPixel( x + xChar, y + yChar, colour );
+            
+            // printf( "bp=%d, ap=%d\n", bitPosition, arrayPosition );
+            ++bitPosition;
+        }
+        ++arrayPosition;
+    }
+    // for ( ;; ) {}
+
+}
+#endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
 
 static inline void m_displayInit( void )
 {

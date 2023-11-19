@@ -26,11 +26,18 @@ int main( void )
         return 1;
     }
 
-    oled_test();
+    // oled_test();
+    
+    for( char c = 32; c < 127; ++c )
+    {
+        oled_clear();
+        oled_writeChar( 10U, 10U, c, 8U, 0xFFFF );
+        sleep_ms( 500U );
+    }
 
     for( ;; ) 
     {
-        printf( "Hello world\n" );
-        sleep_ms( 1000 );
+        printf( "End\n" );
+        sleep_ms( 1000U );
     }
 }
