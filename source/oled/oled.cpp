@@ -55,7 +55,7 @@ int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin,
         m_spiInstance = 0;
         // Set the SPI format to be the same as Arduino's SPI Mode 3, i.e.:
         // Most significant bit first, clock polarity = 1, clock phase = 1
-        spi_set_format( spi0, 8U, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST );
+        // spi_set_format( spi0, 8U, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST );
     }
     else if( ( spiOutput == 1 ) &&
         ( ( dinPin == 11 ) || ( dinPin == 15 ) ) && // Check din pin is connected to a SPI1 TX
@@ -162,8 +162,8 @@ int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin,
 void oled_clear( void )
 {
     // I wrote this comment:
-    // This code cannot be used for setting the display to any other color
-    // But not sure I believe it
+    // "This code cannot be used for setting the display to any other color"
+    // But not sure I believe my past self
 
     m_writeReg(0x15);
     m_writeData(0);
@@ -185,9 +185,9 @@ void oled_test( void )
     uint8_t drawMode = 0;
     for( ;; )
     {
-        for( uint8_t x = 0U; x < m_displayWidth; ++x )
+        for( uint8_t y = 0U; y < m_displayHeight; ++y )
         {
-            for( uint8_t y = 0U; y < m_displayHeight; ++y )
+            for( uint8_t x = 0U; x < m_displayWidth; ++x )
             {
                 if( drawMode == 0 )
                     color = ( (uint16_t) x * (uint16_t) x) + ( (uint16_t) y * (uint16_t) y);
