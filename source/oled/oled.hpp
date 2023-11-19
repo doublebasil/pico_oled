@@ -1,6 +1,9 @@
 #ifndef OLED_HPP
 #define OLED_HPP
 
+// Settings for this module
+#define OLED_INCLUDE_TEST_FUNCTION
+
 #include <stdint.h>
 
 /*
@@ -25,7 +28,7 @@ int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin,
 /*
  * Function: oled_clear
  * --------------------
- * Removes everything on the screen, setting every pixel to black
+ * Set the display to black
  *
  * parameters: none
  *
@@ -33,10 +36,18 @@ int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin,
  */
 void oled_clear( void );
 
+#ifdef OLED_INCLUDE_TEST_FUNCTION
 /*
-Fill the screen with something to test the display
-*/
+ * Function: oled_test
+ * --------------------
+ * Removes everything on the screen, setting every pixel to black
+ *
+ * parameters: none
+ *
+ * returns: void
+ */
 void oled_test( void );
+#endif /* OLED_INCLUDE_TEST_FUNCTION */
 
 #endif /* OLED_HPP */
 

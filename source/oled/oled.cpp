@@ -77,6 +77,8 @@ int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin,
         return 1;
     }
 
+    m_chipSelect();
+
     gpio_put( m_rstPin, 1 );
     sleep_ms( 100U );
     gpio_put( m_rstPin, 0 );
@@ -93,16 +95,14 @@ int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin,
     sleep_ms( 500U );
 
     oled_clear();
+    // CS is now inactive (high)
 
     return 0;
 }
 
 void oled_clear( void )
 {
-    // I wrote this comment:
-    // "This code cannot be used for setting the display to any other color"
-    // But not sure I believe my past self
-
+    m_chipSelect();
     m_writeReg(0x15);
     m_writeData(0);
     m_writeData(127);
@@ -112,15 +112,23 @@ void oled_clear( void )
 
     m_writeReg(0x5C);
 
-    for( uint16_t i = 0; i < m_displayWidth * m_displayHeight * 2U; ++i ) {
-        m_writeData(0x0000);
+    for( uint16_t i = 0; i < m_displayWidth * m_displayHeight; ++i )
+    {
+        m_writeData( 0x00 );
+        m_writeData( 0x00 );
     }
+    m_chipDeselect();
 }
 
-void oled_test( void )
+#ifdef OLED_INCLUDE_TEST_FUNCTION
+void oled_test( void ) // Needs rewriting
 {
-    uint16_t color;
+    uint16_t color = 0;
     uint8_t drawMode = 0;
+    uint16_t red;
+    uint16_t green;
+    uint16_t blue;
+    m_chipSelect();
     for( ;; )
     {
         for( uint8_t y = 0U; y < m_displayHeight; ++y )
@@ -128,9 +136,20 @@ void oled_test( void )
             for( uint8_t x = 0U; x < m_displayWidth; ++x )
             {
                 if( drawMode == 0 )
-                    color = ( (uint16_t) x * (uint16_t) x) + ( (uint16_t) y * (uint16_t) y);
+                    color = ( ( x / 4 ) & 0b11111 ) << ( 5 + 6 );
+                    // color = ( (uint16_t) x * (uint16_t) x) + ( (uint16_t) y * (uint16_t) y);
                 else if( drawMode == 1 )
-                    color = ( (uint16_t) x * (uint16_t) x) - ( (uint16_t) y * (uint16_t) y);
+                    color = ( ( y / 3 ) & 0b111111 ) << ( 5 );
+                    // color = ( (uint16_t) x * (uint16_t) x) - ( (uint16_t) y * (uint16_t) y);
+                else if( drawMode == 2)
+                    color = ( ( x / 4 ) & 0b11111 );
+                else if (drawMode == 3 )
+                {
+                    red = ( x / 4 ) & 0b11111;
+                    green = ( ( x + y ) / 4 ) & 0b111111;
+                    blue = ( y / 4 ) & 0b11111;
+                    color = ( red << ( 5 + 6 ) ) + ( green << 5 ) + blue;
+                }
 
                 m_writeReg(0x15);
                 m_writeData(x);
@@ -146,15 +165,18 @@ void oled_test( void )
                 m_writeData(color);
             }
         }
+        sleep_ms( 1000U );
         ++drawMode;
-        if( drawMode == 2 )
+        if( drawMode == 4 )
             drawMode = 0;
     }
     
 }
+#endif /* OLED_INCLUDE_TEST_FUNCTION */
 
 static inline void m_displayInit( void )
 {
+    // CS should be set low (active) prior to calling this function
     // Now for some inexplicable magic from the manufacturer. Comments here are from the manufacturer
     m_writeReg(0xFD);  // Command lock
     m_writeData(0x12);
@@ -235,21 +257,17 @@ static inline void m_chipDeselect( void )
 static inline void m_writeReg( uint8_t reg )
 {
     gpio_put( m_dcPin, 0 );
-    m_chipSelect();
     if( m_spiInstance == 0 )
         spi_write_blocking( spi0, &reg, 1 );
     else
         spi_write_blocking( spi1, &reg, 1 );
-    m_chipDeselect(); // Repeatedly selecting and deselecting is bad
 }
 
 static inline void m_writeData( uint8_t data )
 {
     gpio_put( m_dcPin, 1 );
-    m_chipSelect();
     if( m_spiInstance == 0 )
         spi_write_blocking( spi0, &data, 1 );
     else
         spi_write_blocking( spi1, &data, 1 );
-    m_chipDeselect(); // Repeatedly selecting and deselecting is bad
 }
