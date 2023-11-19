@@ -138,6 +138,12 @@ void oled_clear( void )
 
 void oled_setPixel( uint8_t x, uint8_t y, uint16_t colour )
 {
+    if( ( x < 0U ) || ( y < 0U ) || ( x > m_displayWidth ) || ( y > m_displayHeight ) )
+    {
+        // Pixel is out of bounds
+        return;
+    }
+
     m_chipSelect();
 
     m_writeReg(0x15);
@@ -304,7 +310,7 @@ void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, char* arrayStart, uin
 {
     char* arrayPtr = arrayStart;
     uint8_t xCurrentTextPosition = xStartPos;
-    uint8_t yCurrentTextPosition = yStartPos;
+    uint8_t yCurrentTextPosition = yStartPos; // Can use this if text wrapping gets implemented
     uint8_t characterWidth;
     if( fontSize == 8U )
         characterWidth = OLED_FONT8_WIDTH;

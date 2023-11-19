@@ -4,10 +4,10 @@
 /* Settings for this module ------------------------------------------------ */
 #define OLED_INCLUDE_TEST_FUNCTION      ( 1 )
 // #define OLED_INCLUDE_FONT8              ( 1 ) // Uses ~760 bytes
-#define OLED_INCLUDE_FONT12             ( 1 ) // Uses ~1144 bytes
+// #define OLED_INCLUDE_FONT12             ( 1 ) // Uses ~1144 bytes
 // #define OLED_INCLUDE_FONT16             ( 1 ) // Uses ~3044 bytes
 // #define OLED_INCLUDE_FONT20             ( 1 ) // Uses ~3804 bytes
-// #define OLED_INCLUDE_FONT24             ( 1 ) // Uses ~6844 bytes
+#define OLED_INCLUDE_FONT24             ( 1 ) // Uses ~6844 bytes
 
 #include <stdint.h>
 

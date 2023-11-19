@@ -36,8 +36,10 @@ int main( void )
     //     sleep_ms( 500U );
     // }
 
-    char text[] = "Hello, world!";
-    oled_writeText( 0U, 0U, &text[0], (uint8_t) sizeof(text) / sizeof(text[0]), 12, 0xFFFFU );
+    char text[] = "Hello,";
+    oled_writeText( 0U, 0U, &text[0], (uint8_t) sizeof(text) / sizeof(text[0]), 24, 0xC01FU );
+    char text2[] = "world!";
+    oled_writeText( 0U, 25U, &text2[0], (uint8_t) sizeof(text2) / sizeof(text2[0]), 24, 0xC01FU );
 
     for( ;; ) 
     {

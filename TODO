@@ -1,11 +1,14 @@
-Fix the damn font code its buggered
-
-Add support for writing multiple characters
-
 Don't let the user set pixels outside of the display boundaries
 
-Find the size of the fonttables and write it in the header files
+Change the text writing function so that you can write a string
+directly in the function. Copy printf
 
-Add image support
+Add text wrapping? Sometimes text wrapping would be annoying
+so would need to be a parameter or separate function
+
+Neaten the oled_test function, make the gradients use the display dimensions
+in the calculations
 
 Add QR generation
+
+Add image support
