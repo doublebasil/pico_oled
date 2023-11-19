@@ -224,18 +224,12 @@ static inline void m_displayInit( void )
 
 static inline void m_chipSelect( void )
 {
-    // Wait 3 cpu cycles (nop is a asm command which does nothing)
-    asm volatile( "nop \n nop \n nop" ); // Definitely consider getting rid of this once things are working
     gpio_put( PICO_DEFAULT_SPI_CSN_PIN, 0 );
-    asm volatile( "nop \n nop \n nop" );
 }
 
 static inline void m_chipDeselect( void )
 {
-    // Wait 3 cpu cycles (nop is a asm command which does nothing)
-    asm volatile( "nop \n nop \n nop" ); // Definitely consider getting rid of this once things are working
     gpio_put( PICO_DEFAULT_SPI_CSN_PIN, 1 );
-    asm volatile( "nop \n nop \n nop" );
 }
 
 static inline void m_writeReg( uint8_t reg )
