@@ -4,13 +4,13 @@
 #include "pico/binary_info.h"
 #include "hardware/spi.h"
 
+#include "font8.h"
+
 static inline void m_displayInit( void );
 static inline void m_chipSelect( void );
 static inline void m_chipDeselect( void );
 static inline void m_writeReg( uint8_t reg );
 static inline void m_writeData( uint8_t data );
-
-// IF THIS ISN'T WORKING IT MIGHT BE BECAUSE OF m_spiInstance
 
 static int8_t m_csPin;
 static int8_t m_dcPin;
