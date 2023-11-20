@@ -41,8 +41,10 @@ int main( void )
     // char text2[] = "world!";
     // oled_writeText( 0U, 25U, &text2[0], (uint8_t) sizeof(text2) / sizeof(text2[0]), 24, 0xC01FU, false );
 
-    char text[] = "abcdefghijklmnopqrstuvwxyz";
-    oled_writeText( 0U, 0U, &text[0], (uint8_t) sizeof(text) / sizeof(text[0]), 24, 0xC01FU, true );
+    // char text[] = "abcdefghijklmnopqrstuvwxyz";
+    // oled_writeText( 0U, 0U, &text[0], (uint8_t) sizeof(text) / sizeof(text[0]), 24, 0b0000000000011111U, true );
+
+    oled_writeText( 0U, 0U, "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 24, 0b0000000000011111U, true );
 
     for( ;; ) 
     {

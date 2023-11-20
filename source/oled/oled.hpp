@@ -97,16 +97,15 @@ void oled_writeChar( uint8_t x, uint8_t y, char asciiCharacter, uint8_t fontSize
  *
  * xStartPos: Display x coordinate of the top left of the first character to be written
  * yStartPos: Display y coordinate of the top left of the first character to be written
- * arrayStart: Pointer to the start of the character array
- * arraySize: Number of elements in the character array
+ * text: Text to write to display
  * fontSize: Height of text in pixels, can be 8, 12, 16, 20 or 24
  * colour: Text colour in RGB565 format
  * useTextWrapping: If true, when the end of the display is reached a new line will be started
  *
  * returns: void
  */
-void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, char* arrayStart, 
-    uint8_t arraySize, uint8_t fontSize, uint16_t colour, bool useTextWrapping );
+void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, const char text[],
+    uint8_t fontSize, uint16_t colour, bool useTextWrapping );
 
 #endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
 
