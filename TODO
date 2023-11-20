@@ -1,9 +1,4 @@
-Fiddle with the delays in the init function
-
 Add various loading bars
-
-Change the text writing function so that you can write a string
-directly in the function.
 
 Neaten the oled_test function, make the gradients use the display dimensions
 in the calculations

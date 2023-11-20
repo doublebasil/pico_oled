@@ -96,19 +96,19 @@ int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin,
     m_chipSelect();
 
     gpio_put( m_rstPin, 1 );
-    sleep_ms( 100U );
+    sleep_ms( 10U );
     gpio_put( m_rstPin, 0 );
-    sleep_ms( 100U );
+    sleep_ms( 10U );
     gpio_put( m_rstPin, 1 );
 
     m_displayInit();
 
-    sleep_ms( 200U );
+    sleep_ms( 10U );
 
     // Turn on the display
     m_writeReg(0xAF);
 
-    sleep_ms( 500U );
+    sleep_ms( 10U );
 
     oled_clear();
     // CS is now inactive (high)
@@ -160,6 +160,82 @@ void oled_setPixel( uint8_t x, uint8_t y, uint16_t colour )
 
     m_chipDeselect();
 }
+
+void oled_fill( uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint16_t colour )
+{
+    uint8_t xMin;
+    uint8_t xMax;
+    uint8_t yMin;
+    uint8_t yMax;
+    if( x1 < x2 )
+    {
+        xMin = x1;
+        xMax = x2;
+    }
+    else
+    {
+        xMin = x2;
+        xMax = x1;
+    }
+    if( y1 < y2 )
+    {
+        yMin = y1;
+        yMax = y2;
+    }
+    else
+    {
+        yMin = y2;
+        yMax = y1;
+    }
+    for( uint8_t x = xMin; x <= xMax; ++x )
+    {
+        for( uint8_t y = yMin; y <= yMax; ++y )
+        {
+            oled_setPixel( x, y, colour );
+        }
+    }
+}
+
+#ifdef OLED_INCLUDE_LOADING_BAR_HORIZONTAL
+void oled_loadingBarHorizontal( uint8_t barX1, uint8_t barY1, uint8_t barX2, 
+    uint8_t barY2, uint16_t permille, uint16_t colour, bool hasBorder )
+{
+    if( hasBorder == true )
+    {
+        oled_fill( barX1, barY1, barX1, barY2, colour );
+        oled_fill( barX1, barY1, barX2, barY1, colour );
+        oled_fill( barX1, barY2, barX2, barY2, colour );
+        oled_fill( barX2, barY1, barX2, barY2, colour );
+    }
+
+    uint8_t xMin;
+    uint8_t xMax;
+    uint8_t yMin;
+    uint8_t yMax;
+    if( barX1 < barX2 )
+    {
+        xMin = barX1;
+        xMax = barX2;
+    }
+    else
+    {
+        xMin = barX2;
+        xMax = barX1;
+    }
+    if( barY1 < barY2 )
+    {
+        yMin = barY1;
+        yMax = barY2;
+    }
+    else
+    {
+        yMin = barY2;
+        yMax = barY1;
+    }
+
+    oled_fill( xMin, yMin, ( ( ( xMax - xMin ) * permille ) / 1000U) + xMin, yMax, colour );
+}
+#endif /* OLED_INCLUDE_LOADING_BAR_HORIZONTAL */
 
 #ifdef OLED_INCLUDE_TEST_FUNCTION
 void oled_test( void ) // Needs rewriting

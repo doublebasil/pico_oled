@@ -2,12 +2,15 @@
 #define OLED_HPP
 
 /* Settings for this module ------------------------------------------------ */
-#define OLED_INCLUDE_TEST_FUNCTION      ( 1 )
-// #define OLED_INCLUDE_FONT8              ( 1 ) // Uses ~760 bytes
-// #define OLED_INCLUDE_FONT12             ( 1 ) // Uses ~1144 bytes
-// #define OLED_INCLUDE_FONT16             ( 1 ) // Uses ~3044 bytes
-// #define OLED_INCLUDE_FONT20             ( 1 ) // Uses ~3804 bytes
-#define OLED_INCLUDE_FONT24             ( 1 ) // Uses ~6844 bytes
+#define OLED_INCLUDE_TEST_FUNCTION
+#define OLED_INCLUDE_LOADING_BAR_HORIZONTAL
+#define OLED_INCLUDE_LOADING_BAR_ROUND
+#define OLED_INCLUDE_FONT8                      // Uses ~760 bytes
+#define OLED_INCLUDE_FONT12                     // Uses ~1144 bytes
+#define OLED_INCLUDE_FONT16                     // Uses ~3044 bytes
+#define OLED_INCLUDE_FONT20                     // Uses ~3804 bytes
+#define OLED_INCLUDE_FONT24                     // Uses ~6844 bytes
+#define OLED_WRITE_TEXT_CHARACTER_GAP     ( 0 ) // Number of pixels between character
 
 #include <stdint.h>
 
@@ -54,6 +57,42 @@ void oled_clear( void );
  */
 void oled_setPixel( uint8_t x, uint8_t y, uint16_t colour );
 
+/*
+ * Function: oled_fill
+ * --------------------
+ * Set the colour of a specific pixel
+ *
+ * x1: x coordinate of corner 1
+ * y1: y coordinate of corner 1
+ * x2: x coordinate of corner 2
+ * y2: y coordinate of corner 2
+ * colour: Pixel colour in RGB565 format
+ *
+ * returns: void
+ */
+void oled_fill( uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint16_t colour );
+
+#ifdef OLED_INCLUDE_LOADING_BAR_HORIZONTAL
+/*
+ * Function: oled_loadingBarHorizontal
+ * --------------------
+ * Display a horizontal loading bar, specifying coordinates for the corners of
+ * the bar. Progress measured in permille (out of 1000)
+ *
+ * barX1: X co-ordinate 1 of progress bar
+ * barY1: Y co-ordinate 1 of progress bar
+ * barX2: X co-ordinate 2 of progress bar
+ * barY2: Y co-ordinate 2 of progress bar
+ * permille: Progress out of 1000 (1000 would be done, 0 would be empty)
+ * colour: Progress bar colour in RGB565
+ * hasBorder: Set to true to draw a border around the progress bar
+ *
+ * returns: void
+ */
+void oled_loadingBarHorizontal( uint8_t barX1, uint8_t barY1, uint8_t barX2, 
+    uint8_t barY2, uint16_t permille, uint16_t colour, bool hasBorder );
+#endif /* OLED_INCLUDE_LOADING_BAR_HORIZONTAL */
+
 #ifdef OLED_INCLUDE_TEST_FUNCTION
 /*
  * Function: oled_test
@@ -73,7 +112,6 @@ void oled_test( void );
 #define OLED_FONT16_WIDTH               ( 11 )
 #define OLED_FONT20_WIDTH               ( 14 )
 #define OLED_FONT24_WIDTH               ( 17 )
-#define OLED_WRITE_TEXT_CHARACTER_GAP   ( 1 ) // Number of pixels between character
 
 /*
  * Function: oled_writeChar

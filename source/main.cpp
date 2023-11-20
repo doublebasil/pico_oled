@@ -44,7 +44,31 @@ int main( void )
     // char text[] = "abcdefghijklmnopqrstuvwxyz";
     // oled_writeText( 0U, 0U, &text[0], (uint8_t) sizeof(text) / sizeof(text[0]), 24, 0b0000000000011111U, true );
 
-    oled_writeText( 0U, 0U, "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 24, 0b0000000000011111U, true );
+    
+    // oled_writeText( 0U, 0U, "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 24, 0b0000000000011111U, true );
+    // sleep_ms( 1000U );
+    // oled_clear();
+    // oled_writeText( 0U, 0U, "abcdefghijklmnopqrstuvwxyz0123456789", 16, 0b1111100000000000U, true );
+
+    // oled_fill( 10, 10, 100, 100, 0xFF00 );
+    // oled_fill( 0, 0, 0, 1, 0xFFFF );
+
+    // oled_loadingBarHorizontal( 10, (128/2)-10, 128-10, (128/2)+10, 200, 0b0000011111100000, true );
+
+    oled_loadingBarHorizontal( 10, (128/2)-10, 128-10, (128/2)+10, 0U, 0b0000011111100000, true );
+    sleep_ms( 500U );
+    uint16_t p = 0;
+    while( true )
+    {
+        oled_loadingBarHorizontal( 10, (128/2)-10, 128-10, (128/2)+10, p, 0b0000011111100000, true );
+        sleep_ms( 10U );
+        p += 25;
+        if( p > 1000U )
+        {
+            oled_loadingBarHorizontal( 10, (128/2)-10, 128-10, (128/2)+10, 1000U, 0b0000011111100000, true );
+            break;
+        }
+    }
 
     for( ;; ) 
     {
