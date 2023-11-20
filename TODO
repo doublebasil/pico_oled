@@ -1,4 +1,6 @@
-Don't let the user set pixels outside of the display boundaries
+Fiddle with the delays in the init function
+
+Add various loading bars
 
 Change the text writing function so that you can write a string
 directly in the function. Copy printf

@@ -306,11 +306,12 @@ void oled_writeChar( uint8_t x, uint8_t y, char character, uint8_t fontSize, uin
 }
 #endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
 
-void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, char* arrayStart, uint8_t arraySize, uint8_t fontSize, uint16_t colour )
+void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, char* arrayStart, 
+    uint8_t arraySize, uint8_t fontSize, uint16_t colour, bool useTextWrapping )
 {
     char* arrayPtr = arrayStart;
     uint8_t xCurrentTextPosition = xStartPos;
-    uint8_t yCurrentTextPosition = yStartPos; // Can use this if text wrapping gets implemented
+    uint8_t yCurrentTextPosition = yStartPos;
     uint8_t characterWidth;
     if( fontSize == 8U )
         characterWidth = OLED_FONT8_WIDTH;
@@ -330,6 +331,20 @@ void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, char* arrayStart, uin
 
     for( uint8_t arrayPosition = 0U; arrayPosition < arraySize; ++arrayPosition )
     {
+        if( useTextWrapping == true )
+        {
+            if( ( xCurrentTextPosition + characterWidth ) > m_displayWidth )
+            {
+                xCurrentTextPosition = xStartPos;
+                yCurrentTextPosition += fontSize + OLED_WRITE_TEXT_CHARACTER_GAP;
+            }
+            if( ( yCurrentTextPosition + fontSize ) > m_displayHeight )
+            {
+                // Ran out of space, stop writing text
+                break;
+            }
+        }
+
         oled_writeChar( xCurrentTextPosition, yCurrentTextPosition, *arrayPtr, fontSize, colour );
         ++arrayPtr;
         xCurrentTextPosition += characterWidth + OLED_WRITE_TEXT_CHARACTER_GAP;
