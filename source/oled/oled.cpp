@@ -1,6 +1,9 @@
 #include "oled.hpp"
 
 #include <stdio.h> // Just for debugging
+#ifdef OLED_INCLUDE_LOADING_BAR_ROUND
+#include <math.h>
+#endif
 
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
@@ -28,12 +31,42 @@ static int8_t m_rstPin;
 static int8_t m_spiInstance;
 static uint8_t m_displayWidth;
 static uint8_t m_displayHeight;
+#ifdef OLED_INCLUDE_LOADING_BAR_ROUND
+static const int16_t cosLookupTable[91] = {
+	1000, 1000, 999, 999, 
+	998, 996, 995, 993, 
+	990, 988, 985, 982, 
+	978, 974, 970, 966, 
+	961, 956, 951, 946, 
+	940, 934, 927, 921, 
+	914, 906, 899, 891, 
+	883, 875, 866, 857, 
+	848, 839, 829, 819, 
+	809, 799, 788, 777, 
+	766, 755, 743, 731, 
+	719, 707, 695, 682, 
+	669, 656, 643, 629, 
+	616, 602, 588, 574, 
+	559, 545, 530, 515, 
+	500, 485, 469, 454, 
+	438, 423, 407, 391, 
+	375, 358, 342, 326, 
+	309, 292, 276, 259, 
+	242, 225, 208, 191, 
+	174, 156, 139, 122, 
+	105, 87, 70, 52, 
+	35, 17, 0};
+#endif /* OLED_INCLUDE_LOADING_BAR_ROUND */
 
 static inline void m_displayInit( void );
 static inline void m_chipSelect( void );
 static inline void m_chipDeselect( void );
 static inline void m_writeReg( uint8_t reg );
 static inline void m_writeData( uint8_t data );
+#ifdef OLED_INCLUDE_LOADING_BAR_ROUND
+static inline int16_t m_intsin( int16_t angle );
+static inline int16_t m_intcos( int16_t angle );
+#endif /* OLED_INCLUDE_LOADING_BAR_ROUND */
 
 // Initialise GPIO and SPI
 int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin, 
@@ -233,9 +266,29 @@ void oled_loadingBarHorizontal( uint8_t barX1, uint8_t barY1, uint8_t barX2,
         yMax = barY1;
     }
 
-    oled_fill( xMin, yMin, ( ( ( xMax - xMin ) * permille ) / 1000U) + xMin, yMax, colour );
+    oled_fill( xMin, yMin, ( ( ( xMax - xMin ) * permille ) / 1000U ) + xMin, yMax, colour );
 }
 #endif /* OLED_INCLUDE_LOADING_BAR_HORIZONTAL */
+
+#ifdef OLED_INCLUDE_LOADING_BAR_ROUND
+void oled_loadingBarRound( uint8_t centreX, uint8_t centreY, uint8_t outerRadius, 
+    uint8_t innerRadius, uint16_t permille, uint16_t colour, bool hasBorder )
+{
+    // uint8_t upperBorder[outerRadius*2];
+    // uint8_t index = 0;
+    // if( hasBorder == true )
+    // {
+    //     for( uint8_t x = centreX - outerRadius; x <= centreX + outerRadius; ++x )
+    //     {
+    //         // Use some cartesian sins and coses to find the upper curve. Might only need one quarter
+    //         upperBorder[index] = sin(uint8_t) + (uint8_t) cos( (float) something );
+    //         ++index;
+
+    //         // might want a polynomial sin and cos actually
+    //     }
+    // }
+}
+#endif /* OLED_INCLUDE_LOADING_BAR_ROUND */
 
 #ifdef OLED_INCLUDE_TEST_FUNCTION
 void oled_test( void ) // Needs rewriting
@@ -426,6 +479,15 @@ void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, const char text[],
     }
 }
 
+/*
+ * Function: m_displayInit
+ * --------------------
+ * Initialise the display by writing data to registers
+ *
+ * parameters: none
+ *
+ * returns: void
+ */
 static inline void m_displayInit( void )
 {
     // CS should be set low (active) prior to calling this function
@@ -496,16 +558,43 @@ static inline void m_displayInit( void )
     m_writeReg(0xA6);
 }
 
+/*
+ * Function: m_chipSelect
+ * --------------------
+ * Select the display as an SPI device by setting CS to low
+ *
+ * parameters: none
+ *
+ * returns: void
+ */
 static inline void m_chipSelect( void )
 {
     gpio_put( PICO_DEFAULT_SPI_CSN_PIN, 0 );
 }
 
+/*
+ * Function: m_chipDeselect
+ * --------------------
+ * Deselct the display as an SPI device by setting CS to high
+ *
+ * parameters: none
+ *
+ * returns: void
+ */
 static inline void m_chipDeselect( void )
 {
     gpio_put( PICO_DEFAULT_SPI_CSN_PIN, 1 );
 }
 
+/*
+ * Function: m_writeReg
+ * --------------------
+ * Select register to write data to
+ *
+ * parameters: none
+ *
+ * returns: void
+ */
 static inline void m_writeReg( uint8_t reg )
 {
     gpio_put( m_dcPin, 0 );
@@ -515,6 +604,15 @@ static inline void m_writeReg( uint8_t reg )
         spi_write_blocking( spi1, &reg, 1 );
 }
 
+/*
+ * Function: m_writeData
+ * --------------------
+ * Write data to the selected register
+ *
+ * parameters: none
+ *
+ * returns: void
+ */
 static inline void m_writeData( uint8_t data )
 {
     gpio_put( m_dcPin, 1 );
@@ -523,3 +621,46 @@ static inline void m_writeData( uint8_t data )
     else
         spi_write_blocking( spi1, &data, 1 );
 }
+
+#ifdef OLED_INCLUDE_LOADING_BAR_ROUND
+/*
+ * Function: m_intsin
+ * --------------------
+ * Calculate sin using m_intcos
+ *
+ * angle: Angle in degrees
+ *
+ * returns: round( 1000 * cos( angle ) )
+ */
+static inline int16_t m_intsin( int16_t angle )
+{
+    return m_intcos( angle - 90 );
+}
+
+/*
+ * Function: m_intcos
+ * --------------------
+ * Calculate cos using a lookup table and integer math. Uses no floats/doubles
+ *
+ * angle: Angle in degrees
+ *
+ * returns: round( 1000 * sin( angle ) )
+ */
+static inline int16_t m_intcos( int16_t angle )
+{
+    // Take abs of angle
+    int16_t newAngle = ( angle < 0 ) ? ( -1 * angle ) : angle;
+    // Move the angle to within 0 and 360
+    newAngle = newAngle - ( ( newAngle / 360 ) * 360 );
+
+    int8_t quadrant = newAngle / 90;
+    if( quadrant == 0 ) // ( newAngle >= 0 ) and ( newAngle < 90 )
+        return cosLookupTable[newAngle];
+    else if( quadrant == 1 ) // ( newAngle >= 90 ) and ( newAngle < 180 )
+        return -1 * cosLookupTable[180 - newAngle];
+    else if( quadrant == 2 ) // ( newAngle >= 180 ) and ( newAngle < 270 )
+        return -1 * cosLookupTable[newAngle - 180];
+    else // quadrant = 3, ( newAngle >= 270 ) and ( newAngle < 360 )
+        return cosLookupTable[360 - newAngle];
+}
+#endif /* OLED_INCLUDE_LOADING_BAR_ROUND */

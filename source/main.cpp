@@ -55,20 +55,22 @@ int main( void )
 
     // oled_loadingBarHorizontal( 10, (128/2)-10, 128-10, (128/2)+10, 200, 0b0000011111100000, true );
 
-    oled_loadingBarHorizontal( 10, (128/2)-10, 128-10, (128/2)+10, 0U, 0b0000011111100000, true );
-    sleep_ms( 500U );
-    uint16_t p = 0;
-    while( true )
-    {
-        oled_loadingBarHorizontal( 10, (128/2)-10, 128-10, (128/2)+10, p, 0b0000011111100000, true );
-        sleep_ms( 10U );
-        p += 25;
-        if( p > 1000U )
-        {
-            oled_loadingBarHorizontal( 10, (128/2)-10, 128-10, (128/2)+10, 1000U, 0b0000011111100000, true );
-            break;
-        }
-    }
+    // oled_loadingBarHorizontal( 10, (128/2)-10, 128-10, (128/2)+10, 0U, 0b0000011111100000, true );
+    // sleep_ms( 500U );
+    // uint16_t p = 0;
+    // while( true )
+    // {
+    //     oled_loadingBarHorizontal( 10, (128/2)-10, 128-10, (128/2)+10, p, 0b0000011111100000, true );
+    //     sleep_ms( 10U );
+    //     p += 25;
+    //     if( p > 1000U )
+    //     {
+    //         oled_loadingBarHorizontal( 10, (128/2)-10, 128-10, (128/2)+10, 1000U, 0b0000011111100000, true );
+    //         break;
+    //     }
+    // }
+
+    oled_loadingBarRound( 128U/2U, 128U/2U, 60U, 20U, 700U, 0b0000000000011111, true );
 
     for( ;; ) 
     {

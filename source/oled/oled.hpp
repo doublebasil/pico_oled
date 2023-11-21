@@ -93,6 +93,27 @@ void oled_loadingBarHorizontal( uint8_t barX1, uint8_t barY1, uint8_t barX2,
     uint8_t barY2, uint16_t permille, uint16_t colour, bool hasBorder );
 #endif /* OLED_INCLUDE_LOADING_BAR_HORIZONTAL */
 
+#ifdef OLED_INCLUDE_LOADING_BAR_ROUND
+/*
+ * Function: oled_loadingBarRound
+ * --------------------
+ * Display a horizontal loading bar, specifying coordinates for the corners of
+ * the bar. Progress measured in permille (out of 1000)
+ *
+ * centreX: x coordinate of the centre of the loading bar
+ * centreY: y coordinate of the centre of the loading bar
+ * outerRadius: Distance in pixels from centre point to the outer edge of the loading bar
+ * innerRadius: Distance in pixels from centre point to the inner edge of the loading bar
+ * permille: Progress out of 1000 (1000 is done, 0 is empty)
+ * colour: Colour of the loading bar in RGB565
+ * hasBorder: Set to true to get a border around the loading bar
+ *
+ * returns: void
+ */
+void oled_loadingBarRound( uint8_t centreX, uint8_t centreY, uint8_t outerRadius, 
+    uint8_t innerRadius, uint16_t permille, uint16_t colour, bool hasBorder );
+#endif /* OLED_INCLUDE_LOADING_BAR_ROUND */
+
 #ifdef OLED_INCLUDE_TEST_FUNCTION
 /*
  * Function: oled_test

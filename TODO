@@ -1,8 +1,23 @@
-Add various loading bars
+Add round loading bar
 
 Neaten the oled_test function, make the gradients use the display dimensions
 in the calculations
 
 Add QR generation
 
+There are some methods that'd be more suitable that setPixel in the 
+manufacturers code, which would be more efficient
+
 Add image support
+
+Add extra loading bar functions, so we'll have
+oled_roundLoadingBarInit
+oled_roundLoadingBarUpdate
+oled_roundLoadingBarEnd
+Init will malloc a bitmap, so that the update only has to update
+the pixels that have changed
+End will free the bitmap
+Although, might be a bit over the top for a simple loading bar
+And might have to malloc quite a bit of memory
+By the time you've done all the bitwise operations with the bitmap
+I'm not sure I'll be much better off in terms of speed
