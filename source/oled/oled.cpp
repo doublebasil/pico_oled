@@ -287,6 +287,15 @@ void oled_loadingBarRound( uint8_t centreX, uint8_t centreY, uint8_t outerRadius
     //         // might want a polynomial sin and cos actually
     //     }
     // }
+
+    for( uint8_t x = centreX; x < centreX + outerRadius; ++x )
+    {
+        printf( "sqrtthing=%d\n", ( int16_t ) sqrt( ( outerRadius * outerRadius ) - ( ( x - outerRadius ) * ( x - outerRadius ) ) ) );
+        for( uint8_t y = centreY; y < centreY + ( int16_t ) sqrt( ( outerRadius * outerRadius ) - ( ( x - outerRadius ) * ( x - outerRadius ) ) ); ++y )
+        {
+            oled_setPixel( x, y, 0xFFFF );
+        }
+    }
 }
 #endif /* OLED_INCLUDE_LOADING_BAR_ROUND */
 
