@@ -1,4 +1,5 @@
-Add round loading bar
+Add round loading bar using bitmap. Need to use bitmap
+else you get nasty flashing :()
 
 Neaten the oled_test function, make the gradients use the display dimensions
 in the calculations

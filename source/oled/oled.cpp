@@ -288,12 +288,87 @@ void oled_loadingBarRound( uint8_t centreX, uint8_t centreY, uint8_t outerRadius
     //     }
     // }
 
-    for( uint8_t x = centreX; x < centreX + outerRadius; ++x )
+    // Fill the outer circle
+    if( permille > 250U )
     {
-        printf( "sqrtthing=%d\n", ( int16_t ) sqrt( ( outerRadius * outerRadius ) - ( ( x - outerRadius ) * ( x - outerRadius ) ) ) );
-        for( uint8_t y = centreY; y < centreY + ( int16_t ) sqrt( ( outerRadius * outerRadius ) - ( ( x - outerRadius ) * ( x - outerRadius ) ) ); ++y )
+        for( uint8_t x = centreX; x < centreX + outerRadius; ++x )
         {
-            oled_setPixel( x, y, 0xFFFF );
+            for( uint8_t y = centreY - (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); y < centreY; ++y )
+            {
+                oled_setPixel( x, y, colour );
+            }
+        }
+    }
+    else
+    {
+        // deltaX and deltaY used to calculate m in y=mx+c
+        uint16_t deltaX = m_intsin( ( permille * 90 ) / 250 );
+        uint16_t deltaY = m_intcos( ( permille * 90 ) / 250 );
+        for( uint8_t x = centreX; x < centreX + outerRadius; ++x )
+        {
+            for( uint8_t y = centreY - (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); y < centreY - ( ( deltaY * ( x - centreX ) ) / deltaX ); ++y )
+            {
+                oled_setPixel( x, y, colour );
+            }
+        }
+    }
+    
+    if( permille > 500U )
+    {
+        for( uint8_t x = centreX; x < centreX + outerRadius; ++x )
+        {
+            for( uint8_t y = centreY; y < centreY + (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); ++y )
+            {
+                oled_setPixel( x, y, colour );
+            }
+        }
+    }
+    else
+    {
+        // deltaX and deltaY used to calculate m in y=mx+c
+        uint16_t deltaX = m_intsin( ( ( permille - 250 ) * 90 ) / 250 );
+        uint16_t deltaY = m_intcos( ( ( permille - 250 ) * 90 ) / 250 );
+        bool hasWritten;
+        for( uint8_t y = centreY; y < centreY + outerRadius; ++y )
+        {
+
+            // for( uint8_t x = centreX - (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( y - centreY ) * ( y - centreY ) ) ); x < centreX - ( ( deltaX * ( y - centreY ) ) / deltaY ); ++x )
+            hasWritten = false;
+            for( uint8_t x = centreX + ( ( deltaX * ( y - centreY ) ) / deltaY ); x < centreX + (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( y - centreY ) * ( y - centreY ) ) ); ++x )
+            {
+                hasWritten = true;
+                oled_setPixel( x, y, colour );
+                // sleep_ms(20);
+            }
+            if( hasWritten == false )
+                break;
+        }
+    }
+    
+    if( permille > 750 )
+    {
+        for( uint8_t x = centreX - outerRadius; x < centreX; ++x )
+        {
+            for( uint8_t y = centreY; y < centreY + (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); ++y )
+            {
+                oled_setPixel( x, y, colour );
+            }
+        }
+    }
+
+    
+    // Fill the inner circle
+    uint8_t yBound;
+    if( innerRadius != 0 )
+    {
+        for( uint8_t x = centreX - innerRadius; x < centreX + innerRadius; ++x )
+        {
+            yBound = (uint8_t) sqrt( ( innerRadius * innerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) );
+            // printf("%d\n", ( innerRadius * innerRadius ) - ( ( x - innerRadius ) * ( x - innerRadius ) ));
+            for( uint8_t y = centreY - yBound; y < centreY + yBound; ++y )
+            {
+                oled_setPixel( x, y, 0x0000 );
+            }
         }
     }
 }

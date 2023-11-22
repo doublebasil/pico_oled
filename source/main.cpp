@@ -70,11 +70,16 @@ int main( void )
     //     }
     // }
 
-    oled_loadingBarRound( 128U/2U, 128U/2U, 60U, 20U, 700U, 0b0000000000011111, true );
+    for( uint16_t p = 0; p < 1000U; ++p )
+    {
+        oled_loadingBarRound( 128U/2U, 128U/2U, 60U, 20U, p, 0b0000000000000011, true );
+        sleep_ms( 100U );
+    }
+    // oled_fill( 0, 0, 128, 0, 0xFFFF );
 
+    printf( "End\n" );
     for( ;; ) 
     {
-        printf( "End\n" );
         sleep_ms( 1000U );
     }
 }
