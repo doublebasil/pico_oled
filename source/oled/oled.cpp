@@ -37,8 +37,8 @@ static uint8_t* m_terminalBitmapPtr2 = NULL;
 typedef enum
 {
     e_terminalUninitialised,
-    e_bitmap1Next,
-    e_bitmap2Next,
+    e_terminalBitmap1Next,
+    e_terminalBitmap2Next,
 } t_terminalBitmapState;
 static t_terminalBitmapState m_terminalBitmapState = e_terminalUninitialised;
 static uint8_t m_terminalFontSize;
@@ -591,7 +591,44 @@ void m_terminalWriteText( uint8_t yStartHeight, const char text[] )
 
 }
 
-void m_terminalPushBitmap() {}
+void m_terminalPushBitmap() 
+{
+    // Position within each byte in the bitmap array
+    uint8_t bitPosition = 0U;
+    uint16_t byteNumber = 0U;
+    // Position on the display
+    uint8_t displayPositionX = 0U;
+    uint8_t displayPositionY = 0U;
+    // Check which bitmap to push
+    uint8_t* bitmap = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
+
+    while( displayPositionY != m_displayHeight )
+    {
+        if( ( bitmap[byteNumber] | ( 1 << bitPosition ) ) == 0 )
+            oled_setPixel( displayPositionX, displayPositionY, 0x0000U ); // Background colour
+        else
+            oled_setPixel( displayPositionX, displayPositionY, m_terminalFontColour ); // Text colour
+        
+        ++bitPosition;
+        if( bitPosition == 8U )
+        {
+            bitPosition = 0U;
+            ++byteNumber;
+        }
+        ++displayPositionX;
+        if( displayPositionX == m_displayWidth )
+        {
+            displayPositionX = 0U;
+            ++displayPositionY;
+        }
+    }
+
+    // Change the next bitmap value
+    if( m_terminalBitmapState == e_terminalBitmap1Next )
+        m_terminalBitmapState = e_terminalBitmap2Next;
+    else
+        m_terminalBitmapState = e_terminalBitmap1Next;
+}
 
 int oled_terminalInit( uint8_t fontSize, uint16_t colour )
 {
@@ -603,11 +640,11 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour )
     if( ( ( (uint16_t) m_displayHeight * (uint16_t) m_displayWidth ) % 8U ) != 0U )
         ++bitmapArraySize;
 
-    m_terminalBitmapPtr1 = (uint8_t*) malloc( bitmapArraySize );
+    m_terminalBitmapPtr1 = (uint8_t*) calloc( bitmapArraySize, sizeof( uint8_t ) );
     if( m_terminalBitmapPtr1 == NULL )
         return 1; // Memory allocation failed
 
-    m_terminalBitmapPtr2 = (uint8_t*) malloc( bitmapArraySize );
+    m_terminalBitmapPtr2 = (uint8_t*) calloc( bitmapArraySize, sizeof( uint8_t ) );
     if( m_terminalBitmapPtr1 == NULL )
     {
         // Memory allocation failed
@@ -619,6 +656,7 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour )
     m_terminalFontSize = fontSize;
     m_terminalFontColour = colour;
     m_terminalCurrentLine = 0U;
+    m_terminalBitmapState = e_terminalBitmap1Next;
 
     return 0; // Success
 }
@@ -626,7 +664,14 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour )
 void oled_terminalWrite( const char text[] )
 {
     // Have we ran out of vertical space and need to start scrolling?
-    // uint8_t maxTerminalLine = 1;
+    uint8_t terminalHeightInLines = m_displayHeight / m_terminalFontSize;
+    if( m_terminalCurrentLine == terminalHeightInLines )
+    {
+        // Do some scrolly stuff
+        // YOU WERE HERE, I THINK ENSURING THE BYTES FOR EACH ROW LINE UP WOULD MAKE SCROLLING MUCH EASIER
+        // SO CHANGE THE CALLOCS SLIGHTLY, AND THE SCROLLING CAN BE DONE BY BYTE RATHER THAN BIT
+    }
+    
 }
 
 void oled_terminalWriteTemp( const char text[] ) {}
