@@ -3,8 +3,14 @@
 #include <string.h>
 
 #include "pico/stdlib.h"
+#include "pico/time.h"
 
 #include "oled.hpp"
+
+inline uint64_t millis()
+{
+    return to_us_since_boot( get_absolute_time() ) / 1000ULL;
+}
 
 int main( void )
 {
@@ -27,55 +33,17 @@ int main( void )
         return 1;
     }
 
-    // oled_test();
-    
-    // for( char c = 32; c < 127; ++c )
+    // for( uint16_t p = 0; p < 1000U; ++p )
     // {
-    //     oled_clear();
-    //     oled_writeChar( 10U, 10U, c, 16U, 0xFFFF );
-    //     sleep_ms( 500U );
+    //     oled_loadingBarRound( 128U/2U, 128U/2U, 60U, 20U, p, 0b0000000000000011, true );
+    //     sleep_ms( 100U );
     // }
+    // // oled_fill( 0, 0, 128, 0, 0xFFFF );
 
-    // char text[] = "Hello,";
-    // oled_writeText( 0U, 0U, &text[0], (uint8_t) sizeof(text) / sizeof(text[0]), 24, 0xC01FU, false );
-    // char text2[] = "world!";
-    // oled_writeText( 0U, 25U, &text2[0], (uint8_t) sizeof(text2) / sizeof(text2[0]), 24, 0xC01FU, false );
+    oled_terminalInit( 20U, 0xFFFFU );
+    // oled_terminalWrite();
 
-    // char text[] = "abcdefghijklmnopqrstuvwxyz";
-    // oled_writeText( 0U, 0U, &text[0], (uint8_t) sizeof(text) / sizeof(text[0]), 24, 0b0000000000011111U, true );
-
-    
-    // oled_writeText( 0U, 0U, "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 24, 0b0000000000011111U, true );
-    // sleep_ms( 1000U );
-    // oled_clear();
-    // oled_writeText( 0U, 0U, "abcdefghijklmnopqrstuvwxyz0123456789", 16, 0b1111100000000000U, true );
-
-    // oled_fill( 10, 10, 100, 100, 0xFF00 );
-    // oled_fill( 0, 0, 0, 1, 0xFFFF );
-
-    // oled_loadingBarHorizontal( 10, (128/2)-10, 128-10, (128/2)+10, 200, 0b0000011111100000, true );
-
-    // oled_loadingBarHorizontal( 10, (128/2)-10, 128-10, (128/2)+10, 0U, 0b0000011111100000, true );
-    // sleep_ms( 500U );
-    // uint16_t p = 0;
-    // while( true )
-    // {
-    //     oled_loadingBarHorizontal( 10, (128/2)-10, 128-10, (128/2)+10, p, 0b0000011111100000, true );
-    //     sleep_ms( 10U );
-    //     p += 25;
-    //     if( p > 1000U )
-    //     {
-    //         oled_loadingBarHorizontal( 10, (128/2)-10, 128-10, (128/2)+10, 1000U, 0b0000011111100000, true );
-    //         break;
-    //     }
-    // }
-
-    for( uint16_t p = 0; p < 1000U; ++p )
-    {
-        oled_loadingBarRound( 128U/2U, 128U/2U, 60U, 20U, p, 0b0000000000000011, true );
-        sleep_ms( 100U );
-    }
-    // oled_fill( 0, 0, 128, 0, 0xFFFF );
+    //
 
     printf( "End\n" );
     for( ;; ) 

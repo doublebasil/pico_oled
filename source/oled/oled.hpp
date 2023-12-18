@@ -10,7 +10,7 @@
 #define OLED_INCLUDE_FONT16                     // Uses ~3044 bytes
 #define OLED_INCLUDE_FONT20                     // Uses ~3804 bytes
 #define OLED_INCLUDE_FONT24                     // Uses ~6844 bytes
-#define OLED_WRITE_TEXT_CHARACTER_GAP     ( 0 ) // Number of pixels between character
+#define OLED_WRITE_TEXT_CHARACTER_GAP     ( 0 ) // Number of pixels between characters
 
 #include <stdint.h>
 
@@ -28,7 +28,7 @@
  *
  * returns: void
  */
-int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin, 
+int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin,
     int8_t rstPin, int8_t spiOutput, unsigned int baudrate, uint8_t displayWidth,
     uint8_t displayHeight );
 
@@ -165,6 +165,71 @@ void oled_writeChar( uint8_t x, uint8_t y, char asciiCharacter, uint8_t fontSize
  */
 void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, const char text[],
     uint8_t fontSize, uint16_t colour, bool useTextWrapping );
+
+/*
+ * Function: oled_terminalInit
+ * --------------------
+ * Initialise a terminal for the display. This will create a bitmap array which
+ * will use ceil( ( displayWidth * displayHeight * 2 ) / 8 ) bytes of memory
+ * This is 4096 bytes for a 128x128 display
+ *
+ * fontSize: Height of text in pixels, can be 8, 12, 16, 20 or 24
+ * colour: Colour of text in RGB 565
+ *
+ * returns: int 0 on success
+ *          1 on failed malloc
+ *          2 if terminal is already initialised
+ */
+int oled_terminalInit( uint8_t fontSize, uint16_t colour );
+
+/*
+ * Function: oled_terminalWrite
+ * --------------------
+ * Write a line to the terminal
+ * If there isn't enough vertical space on the screen, the existing text will
+ * scroll up to make room for the new line
+ *
+ * text: Text to be written to the display
+ *
+ * returns: void
+ */
+void oled_terminalWrite( const char text[] );
+
+/*
+ * Function: oled_terminalWrite
+ * --------------------
+ * Write a temporary line to the terminal, next time a line is written it will
+ * replace this temporary line
+ *
+ * text: Text to be written to the display
+ *
+ * returns: void
+ */
+void oled_terminalWriteTemp( const char text[] );
+
+/*
+ * Function: oled_terminalClear
+ * --------------------
+ * Clear the display, next time a line is written to the terminal, it will
+ * appear at the top of the screen
+ *
+ * parameters: void
+ *
+ * returns: void
+ */
+void oled_terminalClear( void );
+
+/*
+ * Function: oled_terminalClear
+ * --------------------
+ * Write a temporary line to the terminal, next time a line is written it will
+ * replace this temporary line
+ *
+ * parameters: void
+ *
+ * returns: void
+ */
+void oled_terminalDeinit( void );
 
 #endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
 

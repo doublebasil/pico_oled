@@ -1,12 +1,12 @@
 Add round loading bar using bitmap. Need to use bitmap
-else you get nasty flashing :()
+else you get nasty flashing :(
 
 Neaten the oled_test function, make the gradients use the display dimensions
 in the calculations
 
 Add QR generation
 
-There are some methods that'd be more suitable that setPixel in the 
+There are some methods that'd be more suitable than setPixel in the 
 manufacturers code, which would be more efficient
 
 Add image support

@@ -31,6 +31,25 @@ static int8_t m_rstPin;
 static int8_t m_spiInstance;
 static uint8_t m_displayWidth;
 static uint8_t m_displayHeight;
+#if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
+static uint8_t* m_terminalBitmapPtr1 = NULL;
+static uint8_t* m_terminalBitmapPtr2 = NULL;
+typedef enum
+{
+    e_terminalUninitialised,
+    e_bitmap1Next,
+    e_bitmap2Next,
+} t_terminalBitmapState;
+static t_terminalBitmapState m_terminalBitmapState = e_terminalUninitialised;
+static uint8_t m_terminalFontSize;
+static uint16_t m_terminalFontColour;
+static uint8_t m_terminalCurrentLine;
+#endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
+
+#if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
+void m_terminalWriteText();
+void m_terminalPushBitmap();
+#endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 #ifdef OLED_INCLUDE_LOADING_BAR_ROUND
 static const int16_t cosLookupTable[91] = {
 	1000, 1000, 999, 999, 
@@ -57,7 +76,6 @@ static const int16_t cosLookupTable[91] = {
 	105, 87, 70, 52, 
 	35, 17, 0};
 #endif /* OLED_INCLUDE_LOADING_BAR_ROUND */
-
 static inline void m_displayInit( void );
 static inline void m_chipSelect( void );
 static inline void m_chipDeselect( void );
@@ -67,6 +85,7 @@ static inline void m_writeData( uint8_t data );
 static inline int16_t m_intsin( int16_t angle );
 static inline int16_t m_intcos( int16_t angle );
 #endif /* OLED_INCLUDE_LOADING_BAR_ROUND */
+
 
 // Initialise GPIO and SPI
 int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin, 
@@ -517,7 +536,6 @@ void oled_writeChar( uint8_t x, uint8_t y, char character, uint8_t fontSize, uin
         ++arrayPosition;
     }
 }
-#endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
 
 void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, const char text[],
     uint8_t fontSize, uint16_t colour, bool useTextWrapping )
@@ -562,6 +580,61 @@ void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, const char text[],
         xCurrentTextPosition += characterWidth + OLED_WRITE_TEXT_CHARACTER_GAP;
     }
 }
+
+/* Function m_terminalWriteText()
+ * --------------------
+ * Does exactly what oled_writeChar and oled_writeText do, but writes to a bitmap
+ * array instead of directly to the screen. Doesn't text wrap
+ **/
+void m_terminalWriteText( uint8_t yStartHeight, const char text[] )
+{
+
+}
+
+void m_terminalPushBitmap() {}
+
+int oled_terminalInit( uint8_t fontSize, uint16_t colour )
+{
+    if( m_terminalBitmapState != e_terminalUninitialised )
+        return 2; // Fail as terminal already initialised
+
+    uint16_t bitmapArraySize = ( (uint16_t) m_displayHeight * (uint16_t) m_displayWidth ) / 8U;
+    // If the division on the above line had to round down, add an extra byte so that it's rounded up
+    if( ( ( (uint16_t) m_displayHeight * (uint16_t) m_displayWidth ) % 8U ) != 0U )
+        ++bitmapArraySize;
+
+    m_terminalBitmapPtr1 = (uint8_t*) malloc( bitmapArraySize );
+    if( m_terminalBitmapPtr1 == NULL )
+        return 1; // Memory allocation failed
+
+    m_terminalBitmapPtr2 = (uint8_t*) malloc( bitmapArraySize );
+    if( m_terminalBitmapPtr1 == NULL )
+    {
+        // Memory allocation failed
+        free( m_terminalBitmapPtr1 );
+        m_terminalBitmapPtr1 = NULL;
+        return 1;
+    }
+
+    m_terminalFontSize = fontSize;
+    m_terminalFontColour = colour;
+    m_terminalCurrentLine = 0U;
+
+    return 0; // Success
+}
+
+void oled_terminalWrite( const char text[] )
+{
+    // Have we ran out of vertical space and need to start scrolling?
+    // uint8_t maxTerminalLine = 1;
+}
+
+void oled_terminalWriteTemp( const char text[] ) {}
+
+void oled_terminalClear( void ) {}
+
+void oled_terminalDeinit( void ) {}
+#endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
 
 /*
  * Function: m_displayInit
@@ -649,7 +722,7 @@ static inline void m_displayInit( void )
  *
  * parameters: none
  *
- * returns: void
+ * returns: void                                                                         
  */
 static inline void m_chipSelect( void )
 {
