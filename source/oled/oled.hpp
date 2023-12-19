@@ -179,6 +179,7 @@ void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, const char text[],
  * returns: int 0 on success
  *          1 on failed malloc
  *          2 if terminal is already initialised
+ *          3 if font size is not valid
  */
 int oled_terminalInit( uint8_t fontSize, uint16_t colour );
 
