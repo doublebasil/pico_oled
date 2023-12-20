@@ -1,19 +1,17 @@
+/* --- STANDARD LIBRARY INCLUDES ---------------------------------------------- */
 #include "oled.hpp"
-
-// TEMP
-#include "pico/time.h"
-inline uint64_t micros() { return to_us_since_boot( get_absolute_time() ); }
-// END OF TEMP
 
 #include <stdio.h> // Just for debugging
 #ifdef OLED_INCLUDE_LOADING_BAR_ROUND
 #include <math.h>
 #endif
 
+/* --- PICO LIBRARY INCLUDES -------------------------------------------------- */
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
 #include "hardware/spi.h"
 
+/* --- PREPROCESSOR -----------------------------------------------------------*/
 #ifdef OLED_INCLUDE_FONT8
 #include "font8.h"
 #endif /* OLED_INCLUDE_FONT8 */
@@ -30,12 +28,14 @@ inline uint64_t micros() { return to_us_since_boot( get_absolute_time() ); }
 #include "font24.h"
 #endif /* OLED_INCLUDE_FONT24 */
 
+/* --- MODULE SCOPE VARIABLES ------------------------------------------------- */
 static int8_t m_csPin;
 static int8_t m_dcPin;
 static int8_t m_rstPin;
 static int8_t m_spiInstance;
 static uint8_t m_displayWidth;
 static uint8_t m_displayHeight;
+/* --- FONT RELATED MODULE SCOPE VARIABLES --- */
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 static uint8_t* m_terminalBitmapPtr1 = NULL;
 static uint8_t* m_terminalBitmapPtr2 = NULL;
@@ -53,12 +53,7 @@ static tFontTable* m_terminalFontTablePtr;
 static uint8_t m_terminalBitmapBytesPerRow;
 static uint16_t m_terminalBitmapCallocSize;
 #endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
-
-#if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
-void m_terminalPushBitmap( void );
-static inline void m_terminalWriteChar( char character, uint8_t textOriginX,
-    uint8_t textOriginY );
-#endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
+/* --- LOADING BAR RELATED MODULE SCOPE VARIABLES --- */
 #ifdef OLED_INCLUDE_LOADING_BAR_ROUND
 static const int16_t cosLookupTable[91] = {
 	1000, 1000, 999, 999, 
@@ -84,17 +79,26 @@ static const int16_t cosLookupTable[91] = {
 	174, 156, 139, 122, 
 	105, 87, 70, 52, 
 	35, 17, 0};
-#endif /* OLED_INCLUDE_LOADING_BAR_ROUND */
+#endif // defined OLED_INCLUDE_LOADING_BAR_ROUND
+
+/* --- MODULE SCOPE FUNCTION PROTOTYPES --------------------------------------- */
 static inline void m_displayInit( void );
 static inline void m_chipSelect( void );
 static inline void m_chipDeselect( void );
 static inline void m_writeReg( uint8_t reg );
 static inline void m_writeData( uint8_t data );
+/* --- FONT RELATED MODULE SCOPE FUNCTIONS --- */
+#if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
+void m_terminalPushBitmap( void );
+static inline void m_terminalWriteChar( char character, uint8_t textOriginX, uint8_t textOriginY );
+#endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
+/* --- LOADING BAR RELATED MODULE SCOPE FUNCTIONS --- */
 #ifdef OLED_INCLUDE_LOADING_BAR_ROUND
 static inline int16_t m_intsin( int16_t angle );
 static inline int16_t m_intcos( int16_t angle );
-#endif /* OLED_INCLUDE_LOADING_BAR_ROUND */
+#endif // defined OLED_INCLUDE_LOADING_BAR_ROUND
 
+/* --- PUBLIC FUNCTION IMPLEMENTATIONS ---------------------------------------- */
 
 // Initialise GPIO and SPI
 int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin, 
@@ -133,7 +137,7 @@ int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin,
         m_spiInstance = 0;
         /* Set the SPI format to be the same as Arduino's SPI Mode 3, i.e.:
          * Most significant bit first, clock polarity = 1, clock phase = 1
-         * This line is not needed, but it's good to ensure the correct settings */
+         * This line made no difference, but I'd like to ensure correct settings */
         spi_set_format( spi0, 8U, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST );
     }
     else if( ( spiOutput == 1 ) &&
@@ -145,7 +149,7 @@ int oled_init( int8_t dinPin, int8_t clkPin, int8_t csPin, int8_t dcPin,
         m_spiInstance = 1;
         /* Set the SPI format to be the same as Arduino's SPI Mode 3, i.e.:
          * Most significant bit first, clock polarity = 1, clock phase = 1
-         * This line is not needed, but it's good to ensure the correct settings */
+         * This line made no difference, but I'd like to ensure correct settings */
         spi_set_format( spi1, 8U, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST );
     }
     else
@@ -459,13 +463,7 @@ void oled_test( void ) // Needs rewriting
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 void oled_writeChar( uint8_t x, uint8_t y, char character, uint8_t fontSize, uint16_t colour )
 {
-    tFontTable fontTable;
-
-    if( ( character < 32 ) || ( character > ( 32 + 95 ) ) )
-    {
-        // Invalid ascii character, draw a blank character
-        character = 32;
-    }
+    tFontTable* fontTable;
 
     if( ( x < 0 ) || ( x > m_displayWidth ) || ( y < 0 ) || ( y > m_displayHeight ) )
     {
@@ -473,40 +471,46 @@ void oled_writeChar( uint8_t x, uint8_t y, char character, uint8_t fontSize, uin
         return;
     }
 
+    if( ( character < 32 ) || ( character > ( 32 + 95 ) ) )
+    {
+        // Invalid ascii character, draw a blank character
+        character = ' '; // = 32
+    }
+
     switch( fontSize )
     {
 #ifdef OLED_INCLUDE_FONT8
         case 8U:
         {
-            fontTable = Font8;
+            fontTable = &Font8;
         }
         break;
 #endif /* OLED_INCLUDE_FONT8 */
 #ifdef OLED_INCLUDE_FONT12
         case 12U:
         {
-            fontTable = Font12;
+            fontTable = &Font12;
         }
         break;
 #endif /* OLED_INCLUDE_FONT12 */
 #ifdef OLED_INCLUDE_FONT16
         case 16U:
         {
-            fontTable = Font16;
+            fontTable = &Font16;
         }
         break;
 #endif /* OLED_INCLUDE_FONT16 */
 #ifdef OLED_INCLUDE_FONT20
         case 20U:
         {
-            fontTable = Font20;
+            fontTable = &Font20;
         }
         break;
 #endif /* OLED_INCLUDE_FONT20 */
 #ifdef OLED_INCLUDE_FONT24
         case 24U:
         {
-            fontTable = Font24;
+            fontTable = &Font24;
         }
         break;
 #endif /* OLED_INCLUDE_FONT24 */
@@ -521,19 +525,20 @@ void oled_writeChar( uint8_t x, uint8_t y, char character, uint8_t fontSize, uin
     // Write the character
 
     // Calculate the width of a character in bytes
-    uint16_t characterWidthBytes = ( fontTable.Width / 8U ) + 1U;
+    uint16_t characterWidthBytes = ( fontTable->Width / 8U ) + 1U;
     // Find starting position in the array. Note that the first 32 characters of
     // ascii aren't human readable
-    uint16_t arrayPosition = fontTable.Height * characterWidthBytes * (uint16_t) ( character - 32U );
+    uint16_t arrayPosition = fontTable->Height * characterWidthBytes * (uint16_t) ( character - 32U );
     // bitPosition records the position within each byte
     uint8_t bitPosition;
-    for( uint8_t yChar = 0U; yChar < fontTable.Height; yChar++ )
+    // Displacement variables is relative to the characters origin
+    for( uint8_t yDisplacement = 0U; yDisplacement < fontTable->Height; yDisplacement++ )
     {
         bitPosition = 0;
-        for( uint8_t xChar = 0U; xChar < fontTable.Width; xChar++ )
+        for( uint8_t xDisplacement = 0U; xDisplacement < fontTable->Width; xDisplacement++ )
         {
-            if( ( fontTable.table[arrayPosition] & ( 0b10000000 >> bitPosition ) ) != 0 )
-                oled_setPixel( x + xChar, y + yChar, colour );
+            if( ( fontTable->table[arrayPosition] & ( 0b10000000 >> bitPosition ) ) != 0 )
+                oled_setPixel( x + xDisplacement, y + yDisplacement, colour );
 
             ++bitPosition;
             if( bitPosition == 8 )
@@ -549,6 +554,7 @@ void oled_writeChar( uint8_t x, uint8_t y, char character, uint8_t fontSize, uin
 void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, const char text[],
     uint8_t fontSize, uint16_t colour, bool useTextWrapping )
 {
+    // Text position is pixel coordinate for the top left of the glyph
     uint8_t xCurrentTextPosition = xStartPos;
     uint8_t yCurrentTextPosition = yStartPos;
     uint8_t characterWidth;
@@ -645,7 +651,7 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour )
     // Need enough bits to cover the the screen width, might have a few bits unused per row
     // This is so that bytes for each row align, which makes scrolling much much easier
     m_terminalBitmapBytesPerRow = (uint16_t) m_displayWidth / 8U;
-    // Round up if needed
+    // Integer division rounds down but we need to round up
     if( ( (uint16_t) m_displayWidth % 8U ) != 0U )
         ++m_terminalBitmapBytesPerRow;
     // Now need this many bytes per row
@@ -674,8 +680,8 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour )
 
 void oled_terminalWrite( const char text[] )
 {
-    uint8_t* currentBitmapPtr;
-    uint8_t* desiredBitmapPtr;
+    uint8_t* currentBitmapPtr; // What the screen currently has
+    uint8_t* desiredBitmapPtr; // We need to change this bitmap to what we want the screen to have next
     if( m_terminalBitmapState == e_terminalBitmap1Next )
     {
         desiredBitmapPtr = m_terminalBitmapPtr1;
@@ -686,11 +692,10 @@ void oled_terminalWrite( const char text[] )
         desiredBitmapPtr = m_terminalBitmapPtr2;
         currentBitmapPtr = m_terminalBitmapPtr1;
     }
-    // If we've ran out of room, scroll down when copying to the other bitmap
+    // If we've ran out of lines, scroll down when copying to the other bitmap
     uint8_t terminalHeightInLines = m_displayHeight / m_terminalFontSize;
     if( m_terminalCurrentLine == terminalHeightInLines )
     {
-        printf( "Scrolling\nterminalHeightInLines=%d\n", terminalHeightInLines );
         uint16_t sourceByte = 0U;
         // Shift everything up
         while( ( sourceByte + ( (uint16_t) m_terminalBitmapBytesPerRow * m_terminalFontTablePtr->Height ) ) < m_terminalBitmapCallocSize )
@@ -699,18 +704,17 @@ void oled_terminalWrite( const char text[] )
             ++sourceByte;
         }
 
-        // Erase the bottom of the bitmap
+        // Erase the bottom of the bitmap, so we can put our own text on it
         sourceByte = ( terminalHeightInLines - 1 ) * m_terminalFontSize * m_terminalBitmapBytesPerRow;
         while( sourceByte < m_terminalBitmapCallocSize )
         {
-            desiredBitmapPtr[sourceByte] = 0x00; // Background colour
+            desiredBitmapPtr[sourceByte] = 0x00U; // Background colour
             ++sourceByte;
         }
     }
-    // If we still have room, directly copy one bitmap to the other
+    // If we have room and don't need to scroll, directly copy one bitmap to the other
     else
     {
-        printf("Copying\n");
         // This copy takes about 50 microseconds for a 128x128
         for( uint16_t index = 0U; index < m_terminalBitmapCallocSize; index++ )
         {
@@ -718,7 +722,8 @@ void oled_terminalWrite( const char text[] )
         }
     }
     
-    // --- Add the bitmap to the display ---
+    // --- Add the text to the bitmap ---
+    // These positions are of the glyph origins
     uint8_t xCurrentTextPosition = 0U;
     uint8_t yCurrentTextPosition;
     if( m_terminalCurrentLine == terminalHeightInLines )
@@ -727,9 +732,7 @@ void oled_terminalWrite( const char text[] )
         yCurrentTextPosition = ( m_terminalCurrentLine - 1 ) * m_terminalFontSize;
     }
     else
-    {
-        yCurrentTextPosition = m_terminalCurrentLine * m_terminalFontSize;   
-    }
+        yCurrentTextPosition = m_terminalCurrentLine * m_terminalFontSize;
     
     uint8_t characterWidth = m_terminalFontTablePtr->Width;
     
@@ -753,14 +756,14 @@ void oled_terminalWrite( const char text[] )
     // Push the bitmap
     m_terminalPushBitmap();
 
-    // Update variables
+    // Update module scope variables
     if( m_terminalCurrentLine < terminalHeightInLines )
         ++m_terminalCurrentLine;
 }
 
-void oled_terminalWriteTemp( const char text[] ) {}
+void oled_terminalWriteTemp( const char text[] ) {} // TODO
 
-void oled_terminalClear( void ) {}
+void oled_terminalClear( void ) {} // TODO
 
 void oled_terminalDeinit( void ) {}
 #endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
@@ -776,50 +779,42 @@ void oled_terminalDeinit( void ) {}
  *
  * returns: void
  */
-static inline void m_terminalWriteChar( char character, uint8_t textOriginX,
-    uint8_t textOriginY )
+static inline void m_terminalWriteChar( char character, uint8_t textOriginX, uint8_t textOriginY )
 {
     uint8_t* bitmapPtr = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
     // Calculate the width of a character in bytes
-    uint8_t characterWidthBytes = ( (uint8_t) m_terminalFontTablePtr->Width / 8U ) + 1U;
+    uint8_t fontWidthBytes = ( (uint8_t) m_terminalFontTablePtr->Width / 8U ) + 1U;
     // Find starting position in the array. Note that the first 32 characters of
     // ascii aren't human readable
-    uint16_t tablePosition = m_terminalFontTablePtr->Height * (uint16_t) characterWidthBytes * (uint16_t) ( character - 32U );
-    // tableBitPosition records the position within each byte, for the font table
-    uint8_t tableBitPosition;
+    uint16_t fontTableIndex = m_terminalFontTablePtr->Height * (uint16_t) fontWidthBytes * (uint16_t) ( character - 32U );
+    // fontTableBitPosition records the position within each byte, for the font table
+    uint8_t fontTableBitPosition;
+    uint16_t bitmapIndex;
 
-    // Find width of a row on the display in bytes for the bitmap
-    uint8_t bitmapRowWidthBytes = m_displayWidth / 8U;
-    // Round up if needed
-    if( ( (uint16_t) m_displayWidth % 8U ) != 0U )
-        ++bitmapRowWidthBytes;
-    
-    uint16_t bitmapBytePosition;
-
-    for( uint8_t yPosition = 0U; yPosition < m_terminalFontTablePtr->Height; yPosition++ )
+    for( uint8_t yPixelPosition = 0U; yPixelPosition < m_terminalFontTablePtr->Height; yPixelPosition++ )
     {
-        tableBitPosition = 0U;
-        for( uint8_t xPosition = 0U; xPosition < m_terminalFontTablePtr->Width; xPosition++ )
+        fontTableBitPosition = 0U;
+        for( uint8_t xPixelPosition = 0U; xPixelPosition < m_terminalFontTablePtr->Width; xPixelPosition++ )
         {
             // Check the bit in the font table
-            if( ( m_terminalFontTablePtr->table[tablePosition] & ( 0b10000000 >> tableBitPosition ) ) != 0 )
+            if( ( m_terminalFontTablePtr->table[fontTableIndex] & ( 0b10000000 >> fontTableBitPosition ) ) != 0 )
             {
                 // Find the bit within the bitmap that needs to be set high
-                bitmapBytePosition = bitmapRowWidthBytes * ( textOriginY + yPosition );
-                bitmapBytePosition += ( textOriginX + xPosition ) / 8U;
+                bitmapIndex = m_terminalBitmapBytesPerRow * ( textOriginY + yPixelPosition );
+                bitmapIndex += ( textOriginX + xPixelPosition ) / 8U;
                 // Set the pixel in the bitmap high
 
-                bitmapPtr[bitmapBytePosition] |= 0b1 << ( ( textOriginX + xPosition ) % 8U);
+                bitmapPtr[bitmapIndex] |= 0b1 << ( ( textOriginX + xPixelPosition ) % 8U);
             }
 
-            ++tableBitPosition;
-            if( tableBitPosition == 8 )
+            ++fontTableBitPosition;
+            if( fontTableBitPosition == 8 )
             {
-                ++tablePosition;
-                tableBitPosition = 0U;
+                ++fontTableIndex;
+                fontTableBitPosition = 0U;
             }
         }
-        ++tablePosition;
+        ++fontTableIndex;
     }
 
 }
@@ -838,12 +833,11 @@ void m_terminalPushBitmap( void )
 {
     // Position within each byte in the bitmap array
     uint8_t bitPosition = 0U;
-    uint16_t byteNumber = 0U;
+    uint16_t bitmapIndex = 0U;
     // Position on the display
     uint8_t displayPositionX = 0U;
     uint8_t displayPositionY = 0U;
     // Check which bitmap to push
-    // uint8_t* bitmap = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
     uint8_t* desiredStateBitmap;
     uint8_t* currentStateBitmap;
     if( m_terminalBitmapState == e_terminalBitmap1Next )
@@ -860,14 +854,14 @@ void m_terminalPushBitmap( void )
     while( displayPositionY != m_displayHeight )
     {
         // Check if a pixel needs to be turned on
-        if( ( ( currentStateBitmap[byteNumber] & ( 1 << bitPosition ) ) == 0 ) &&
-            ( ( desiredStateBitmap[byteNumber] & ( 1 << bitPosition ) ) != 0 ) )
+        if( ( ( currentStateBitmap[bitmapIndex] & ( 1 << bitPosition ) ) == 0 ) &&
+            ( ( desiredStateBitmap[bitmapIndex] & ( 1 << bitPosition ) ) != 0 ) )
         {
             oled_setPixel( displayPositionX, displayPositionY, m_terminalFontColour );
         }
         // Check if a pixel needs to be turned off
-        else if( ( ( currentStateBitmap[byteNumber] & ( 1 << bitPosition ) ) != 0 ) &&
-            ( ( desiredStateBitmap[byteNumber] & ( 1 << bitPosition ) ) == 0 ) )
+        else if( ( ( currentStateBitmap[bitmapIndex] & ( 1 << bitPosition ) ) != 0 ) &&
+            ( ( desiredStateBitmap[bitmapIndex] & ( 1 << bitPosition ) ) == 0 ) )
         {
             oled_setPixel( displayPositionX, displayPositionY, 0x0000 );
         }
@@ -877,7 +871,7 @@ void m_terminalPushBitmap( void )
         if( bitPosition == 8U )
         {
             bitPosition = 0U;
-            ++byteNumber;
+            ++bitmapIndex;
         }
         ++displayPositionX;
         if( displayPositionX == m_displayWidth )

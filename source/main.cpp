@@ -37,6 +37,10 @@ int main( void )
         return 1;
     }
 
+    oled_writeText( 10, 10, "hello", 12U, 0xFFFF, false );
+    sleep_ms( 1000ULL );
+    oled_clear();
+
     // for( uint16_t p = 0; p < 1000U; ++p )
     // {
     //     oled_loadingBarRound( 128U/2U, 128U/2U, 60U, 20U, p, 0b0000000000000011, true );
@@ -44,7 +48,7 @@ int main( void )
     // }
     // // oled_fill( 0, 0, 128, 0, 0xFFFF );
 
-    int result = oled_terminalInit( 24U, 0b0000000000011111U );
+    int result = oled_terminalInit( 16U, 0b0000000000011111U );
     if( result != 0 )
     {
         printf("terminal init failed with exit code %d\n", result);
