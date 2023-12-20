@@ -40,10 +40,19 @@ int main( void )
     // }
     // // oled_fill( 0, 0, 128, 0, 0xFFFF );
 
-    oled_terminalInit( 20U, 0xFFFFU );
-    // oled_terminalWrite();
+    int result = oled_terminalInit( 20U, 0xFFFFU );
+    if( result != 0 )
+    {
+        printf("terminal init failed with exit code %d\n", result);
+        for( ;; )
+            sleep_ms( 1000U );
+    }
+    oled_terminalWrite( "B" );
+    // oled_terminalWrite( "Hello" );
+    // oled_terminalWrite( "World" );
 
-    //
+    // oled_setPixel(0, 0, 0b1111100000000000);
+    // oled_writeChar(0, 0, 'B', 24U, 0xFFFF );
 
     printf( "End\n" );
     for( ;; ) 

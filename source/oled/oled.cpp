@@ -47,6 +47,8 @@ static uint8_t m_terminalCurrentLine;
 static tFontTable* m_terminalFontTablePtr;
 #endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 
+static uint16_t TEMP_callocSize;
+
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 void m_terminalPushBitmap( void );
 static inline void m_terminalWriteChar( char character, uint8_t textOriginX,
@@ -517,13 +519,13 @@ void oled_writeChar( uint8_t x, uint8_t y, char character, uint8_t fontSize, uin
     uint16_t characterWidthBytes = ( fontTable.Width / 8U ) + 1U;
     // Find starting position in the array. Note that the first 32 characters of
     // ascii aren't human readable
-    uint16_t arrayPosition = fontTable.Height * characterWidthBytes * (uint16_t) ( character - 32 );
+    uint16_t arrayPosition = fontTable.Height * characterWidthBytes * (uint16_t) ( character - 32U );
     // bitPosition records the position within each byte
     uint8_t bitPosition;
-    for( uint8_t yChar = 0U; yChar < fontTable.Height; ++yChar )
+    for( uint8_t yChar = 0U; yChar < fontTable.Height; yChar++ )
     {
         bitPosition = 0;
-        for( uint8_t xChar = 0U; xChar < fontTable.Width; ++xChar )
+        for( uint8_t xChar = 0U; xChar < fontTable.Width; xChar++ )
         {
             if( ( fontTable.table[arrayPosition] & ( 0b10000000 >> bitPosition ) ) != 0 )
                 oled_setPixel( x + xChar, y + yChar, colour );
@@ -532,7 +534,7 @@ void oled_writeChar( uint8_t x, uint8_t y, char character, uint8_t fontSize, uin
             if( bitPosition == 8 )
             {
                 ++arrayPosition;
-                bitPosition = 0;
+                bitPosition = 0U;
             }
         }
         ++arrayPosition;
@@ -583,55 +585,6 @@ void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, const char text[],
         ++text;
         xCurrentTextPosition += characterWidth + OLED_WRITE_TEXT_CHARACTER_GAP;
     }
-}
-
-/*
- * Function: m_terminalPushBitmap
- * --------------------
- * Push the current terminal bitmap to the screen. This function does not
- * automatically change the value of m_terminalBitmapState
- *
- * parameters: none
- *
- * returns: void
- */
-void m_terminalPushBitmap( void ) 
-{
-    // Position within each byte in the bitmap array
-    uint8_t bitPosition = 0U;
-    uint16_t byteNumber = 0U;
-    // Position on the display
-    uint8_t displayPositionX = 0U;
-    uint8_t displayPositionY = 0U;
-    // Check which bitmap to push
-    uint8_t* bitmap = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
-
-    while( displayPositionY != m_displayHeight )
-    {
-        if( ( bitmap[byteNumber] | ( 1 << bitPosition ) ) == 0 )
-            oled_setPixel( displayPositionX, displayPositionY, 0x0000U ); // Background colour
-        else
-            oled_setPixel( displayPositionX, displayPositionY, m_terminalFontColour ); // Text colour
-        
-        ++bitPosition;
-        if( bitPosition == 8U )
-        {
-            bitPosition = 0U;
-            ++byteNumber;
-        }
-        ++displayPositionX;
-        if( displayPositionX == m_displayWidth )
-        {
-            displayPositionX = 0U;
-            ++displayPositionY;
-        }
-    }
-
-    // Change the next bitmap value
-    if( m_terminalBitmapState == e_terminalBitmap1Next )
-        m_terminalBitmapState = e_terminalBitmap2Next;
-    else
-        m_terminalBitmapState = e_terminalBitmap1Next;
 }
 
 int oled_terminalInit( uint8_t fontSize, uint16_t colour )
@@ -693,6 +646,8 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour )
     // Now need this many bytes per row
     bitmapArraySize *= m_displayHeight;
 
+    TEMP_callocSize = bitmapArraySize; // TEMP
+
     m_terminalBitmapPtr1 = (uint8_t*) calloc( bitmapArraySize, sizeof( uint8_t ) );
     if( m_terminalBitmapPtr1 == NULL )
         return 1; // Memory allocation failed
@@ -716,8 +671,10 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour )
 
 void oled_terminalWrite( const char text[] )
 {
-    // uint8_t* bitmapPtr;
-    // bitmapPtr = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
+    uint8_t* bitmapPtr;
+    bitmapPtr = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
+
+    m_terminalPushBitmap();
 
     // Have we ran out of vertical space and need to start scrolling?
     uint8_t terminalHeightInLines = m_displayHeight / m_terminalFontSize;
@@ -733,7 +690,7 @@ void oled_terminalWrite( const char text[] )
         // Shift everything up
         while( ( sourceByte + (uint16_t) bytesPerRow ) < bitmapSize )
         {
-            bitmap[sourceByte] = bitmap[sourceByte + bytesPerRow];
+            bitmapPtr[sourceByte] = bitmapPtr[sourceByte + bytesPerRow];
             ++sourceByte;
         }
 
@@ -741,7 +698,7 @@ void oled_terminalWrite( const char text[] )
         sourceByte = ( m_displayHeight - m_terminalFontSize ) * m_displayWidth;
         while( sourceByte < bitmapSize )
         {
-            bitmap[sourceByte] = 0x00; // Background colour
+            bitmapPtr[sourceByte] = 0x00; // Background colour
             ++sourceByte;
         }
     }
@@ -749,22 +706,22 @@ void oled_terminalWrite( const char text[] )
     // --- Add the bitmap to the display ---
     uint8_t xCurrentTextPosition = 0U;
     uint8_t yCurrentTextPosition = m_terminalCurrentLine * m_terminalFontSize;
-    uint8_t characterWidth;
-    uint8_t pixelPositionX;
-    uint8_t pixelPositionY;
+    uint8_t characterWidth = m_terminalFontTablePtr->Width;
+    // uint8_t pixelPositionX;
+    // uint8_t pixelPositionY;
 
-    // Terminal init function ensures the font size is valid
-    // Get character width
-    if( m_terminalFontSize == 8U )
-        characterWidth = OLED_FONT8_WIDTH;
-    else if( m_terminalFontSize == 12U )
-        characterWidth = OLED_FONT12_WIDTH;
-    else if( m_terminalFontSize == 16U )
-        characterWidth = OLED_FONT16_WIDTH;
-    else if( m_terminalFontSize == 20U )
-        characterWidth = OLED_FONT20_WIDTH;
-    else if( m_terminalFontSize == 24U )
-        characterWidth = OLED_FONT24_WIDTH;
+    // // Terminal init function ensures the font size is valid
+    // // Get character width
+    // if( m_terminalFontSize == 8U )
+    //     characterWidth = OLED_FONT8_WIDTH;
+    // else if( m_terminalFontSize == 12U )
+    //     characterWidth = OLED_FONT12_WIDTH;
+    // else if( m_terminalFontSize == 16U )
+    //     characterWidth = OLED_FONT16_WIDTH;
+    // else if( m_terminalFontSize == 20U )
+    //     characterWidth = OLED_FONT20_WIDTH;
+    // else if( m_terminalFontSize == 24U )
+    //     characterWidth = OLED_FONT24_WIDTH;
     
     // Put the characters on the bitmap
     while( *text != 0 )
@@ -815,17 +772,103 @@ void oled_terminalDeinit( void ) {}
  * returns: void
  */
 static inline void m_terminalWriteChar( char character, uint8_t textOriginX,
-    uint8_t textOriginY );
+    uint8_t textOriginY )
 {
+    uint8_t* bitmapPtr = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
     // Calculate the width of a character in bytes
-    uint16_t characterWidthBytes = ( m_terminalFontTablePtr->Width / 8U ) + 1U;
+    uint8_t characterWidthBytes = ( (uint8_t) m_terminalFontTablePtr->Width / 8U ) + 1U;
     // Find starting position in the array. Note that the first 32 characters of
     // ascii aren't human readable
-    uint16_t arrayPosition = m_terminalFontTablePtr->Height * characterWidthBytes * (uint16_t) ( character - 32 );
-    // bitPosition records the position within each byte
-    uint8_t bitPosition;
-    
-    // YOU WERE HERE AND ABOUT TO DO SOME MAD LOOP STUFF 
+    uint16_t tablePosition = m_terminalFontTablePtr->Height * (uint16_t) characterWidthBytes * (uint16_t) ( character - 32U );
+    // tableBitPosition records the position within each byte, for the font table
+    uint8_t tableBitPosition;
+
+    // Find width of a row on the display in bytes for the bitmap
+    uint8_t bitmapRowWidthBytes = m_displayWidth / 8U;
+    // Round up if needed
+    if( ( (uint16_t) m_displayWidth / 8U ) != 0U )
+        ++bitmapRowWidthBytes;
+    uint16_t bitmapBytePosition;
+
+    for( uint8_t yPosition = 0U; yPosition < m_terminalFontTablePtr->Height; yPosition++ )
+    {
+        tableBitPosition = 0U;
+        for( uint8_t xPosition = 0U; xPosition < m_terminalFontTablePtr->Width; xPosition++ )
+        {
+            // Check the bit in the font table
+            if( ( m_terminalFontTablePtr->table[tablePosition] & ( 0b10000000 >> tableBitPosition ) ) != 0 )
+            {
+                // Find the bit within the bitmap that needs to be set high
+                bitmapBytePosition = bitmapRowWidthBytes * ( textOriginY + yPosition );
+                bitmapBytePosition += ( textOriginX + xPosition ) / 8U;
+                // Set the pixel in the bitmap high
+                bitmapPtr[bitmapBytePosition] |= 0b1 << ( textOriginX + xPosition ) % 8U;
+            }
+
+            ++tableBitPosition;
+            if( tableBitPosition == 8 )
+            {
+                ++tablePosition;
+                tableBitPosition = 0U;
+            }
+        }
+        ++tablePosition;
+    }
+
+}
+
+/*
+ * Function: m_terminalPushBitmap
+ * --------------------
+ * Push the current terminal bitmap to the screen. This function does not
+ * automatically change the value of m_terminalBitmapState
+ *
+ * parameters: none
+ *
+ * returns: void
+ */
+void m_terminalPushBitmap( void ) 
+{
+    // Position within each byte in the bitmap array
+    uint8_t bitPosition = 0U;
+    uint16_t byteNumber = 0U;
+    // Position on the display
+    uint8_t displayPositionX = 0U;
+    uint8_t displayPositionY = 0U;
+    // Check which bitmap to push
+    uint8_t* bitmap = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
+
+    while( displayPositionY != m_displayHeight )
+    {
+
+        if( ( bitmap[byteNumber] & ( 1 << bitPosition ) ) == 0 )
+        {
+            oled_setPixel( displayPositionX, displayPositionY, 0x0000U ); // Background colour
+        }
+        else
+        {
+            oled_setPixel( displayPositionX, displayPositionY, m_terminalFontColour ); // Text colour
+        }
+        
+        ++bitPosition;
+        if( bitPosition == 8U )
+        {
+            bitPosition = 0U;
+            ++byteNumber;
+        }
+        ++displayPositionX;
+        if( displayPositionX == m_displayWidth )
+        {
+            displayPositionX = 0U;
+            ++displayPositionY;
+        }
+    }
+
+    // Change the next bitmap value
+    if( m_terminalBitmapState == e_terminalBitmap1Next )
+        m_terminalBitmapState = e_terminalBitmap2Next;
+    else
+        m_terminalBitmapState = e_terminalBitmap1Next;
 }
 
 /*
