@@ -744,11 +744,6 @@ void oled_terminalWrite( const char text[] )
     m_terminalPushBitmap();
 
     // Update variables
-    if( m_terminalBitmapState == e_terminalBitmap1Next )
-        m_terminalBitmapState = e_terminalBitmap2Next;
-    else
-        m_terminalBitmapState = e_terminalBitmap1Next;
-    
     if( m_terminalCurrentLine != terminalHeightInLines )
         ++m_terminalCurrentLine;
 }
@@ -786,8 +781,9 @@ static inline void m_terminalWriteChar( char character, uint8_t textOriginX,
     // Find width of a row on the display in bytes for the bitmap
     uint8_t bitmapRowWidthBytes = m_displayWidth / 8U;
     // Round up if needed
-    if( ( (uint16_t) m_displayWidth / 8U ) != 0U )
+    if( ( (uint16_t) m_displayWidth % 8U ) != 0U )
         ++bitmapRowWidthBytes;
+    
     uint16_t bitmapBytePosition;
 
     for( uint8_t yPosition = 0U; yPosition < m_terminalFontTablePtr->Height; yPosition++ )
@@ -802,7 +798,8 @@ static inline void m_terminalWriteChar( char character, uint8_t textOriginX,
                 bitmapBytePosition = bitmapRowWidthBytes * ( textOriginY + yPosition );
                 bitmapBytePosition += ( textOriginX + xPosition ) / 8U;
                 // Set the pixel in the bitmap high
-                bitmapPtr[bitmapBytePosition] |= 0b1 << ( textOriginX + xPosition ) % 8U;
+
+                bitmapPtr[bitmapBytePosition] |= 0b1 << ( ( textOriginX + xPosition ) % 8U);
             }
 
             ++tableBitPosition;
@@ -820,8 +817,8 @@ static inline void m_terminalWriteChar( char character, uint8_t textOriginX,
 /*
  * Function: m_terminalPushBitmap
  * --------------------
- * Push the current terminal bitmap to the screen. This function does not
- * automatically change the value of m_terminalBitmapState
+ * Push the current terminal bitmap to the screen. This function does
+ * change the value of m_terminalBitmapState
  *
  * parameters: none
  *

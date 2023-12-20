@@ -1,3 +1,14 @@
+The bitmap push function doesn't compare the two bitmaps, which is
+inefficient and defeats the purpose of having two bitmaps anyway
+
+Read through everything we already have and make sure all of the variable
+types are suitable, and that the variable names makes sense. Currently, they
+dont all make sense. Also make sure the comments are suitable
+
+It's becomming a big file, so need more clear sections, e.g.
+module scope variables, public functions, private functions, etc.
+And separate more clearly into function subsets
+
 Add round loading bar using bitmap. Need to use bitmap
 else you get nasty flashing :(
 

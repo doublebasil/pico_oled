@@ -48,8 +48,8 @@ int main( void )
             sleep_ms( 1000U );
     }
     oled_terminalWrite( "B" );
-    // oled_terminalWrite( "Hello" );
-    // oled_terminalWrite( "World" );
+    oled_terminalWrite( "Hello" );
+    oled_terminalWrite( "World" );
 
     // oled_setPixel(0, 0, 0b1111100000000000);
     // oled_writeChar(0, 0, 'B', 24U, 0xFFFF );
