@@ -674,36 +674,6 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour )
 
 void oled_terminalWrite( const char text[] )
 {
-    // uint8_t* bitmapPtr;
-    // bitmapPtr = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
-
-    // // Have we ran out of vertical space and need to start scrolling?
-    // uint8_t terminalHeightInLines = m_displayHeight / m_terminalFontSize;
-    // if( m_terminalCurrentLine == terminalHeightInLines )
-    // {
-    //     uint8_t bytesPerRow = m_displayWidth / 8U;
-    //     if( ( m_displayWidth % 8U ) != 0 )
-    //         ++bytesPerRow;
-        
-    //     uint16_t bitmapSize = bytesPerRow * m_displayHeight;
-
-    //     uint16_t sourceByte = 0U;
-    //     // Shift everything up
-    //     while( ( sourceByte + ( (uint16_t) bytesPerRow * m_terminalFontTablePtr->Height ) ) < bitmapSize )
-    //     {
-    //         bitmapPtr[sourceByte] = bitmapPtr[sourceByte + ( bytesPerRow * m_terminalFontTablePtr->Height )];
-    //         ++sourceByte;
-    //     }
-
-    //     // Erase the bottom of the bitmap
-    //     sourceByte = ( m_displayHeight - m_terminalFontSize ) * m_displayWidth;
-    //     while( sourceByte < bitmapSize )
-    //     {
-    //         bitmapPtr[sourceByte] = 0x00; // Background colour
-    //         ++sourceByte;
-    //     }
-    // }
-
     uint8_t* currentBitmapPtr;
     uint8_t* desiredBitmapPtr;
     if( m_terminalBitmapState == e_terminalBitmap1Next )
@@ -730,7 +700,7 @@ void oled_terminalWrite( const char text[] )
         }
 
         // Erase the bottom of the bitmap
-        sourceByte = ( m_displayHeight - m_terminalFontSize ) * m_displayWidth;
+        sourceByte = ( terminalHeightInLines - 1 ) * m_terminalFontSize * m_terminalBitmapBytesPerRow;
         while( sourceByte < m_terminalBitmapCallocSize )
         {
             desiredBitmapPtr[sourceByte] = 0x00; // Background colour
@@ -750,7 +720,17 @@ void oled_terminalWrite( const char text[] )
     
     // --- Add the bitmap to the display ---
     uint8_t xCurrentTextPosition = 0U;
-    uint8_t yCurrentTextPosition = m_terminalCurrentLine * m_terminalFontSize;
+    uint8_t yCurrentTextPosition;
+    if( m_terminalCurrentLine == terminalHeightInLines )
+    {
+        // If the display just scrolled, we need to write on the previous line else we'll be writing off the display
+        yCurrentTextPosition = ( m_terminalCurrentLine - 1 ) * m_terminalFontSize;
+    }
+    else
+    {
+        yCurrentTextPosition = m_terminalCurrentLine * m_terminalFontSize;   
+    }
+    
     uint8_t characterWidth = m_terminalFontTablePtr->Width;
     
     // Put the characters on the bitmap

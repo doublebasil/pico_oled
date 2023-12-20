@@ -40,7 +40,7 @@ int main( void )
     // }
     // // oled_fill( 0, 0, 128, 0, 0xFFFF );
 
-    int result = oled_terminalInit( 20U, 0xFFFFU );
+    int result = oled_terminalInit( 20U, 0b0000000000011111U );
     if( result != 0 )
     {
         printf("terminal init failed with exit code %d\n", result);
@@ -61,6 +61,8 @@ int main( void )
     oled_terminalWrite("uvwx");
     sleep_ms( 500 );
     oled_terminalWrite("yz");
+    sleep_ms( 500 );
+    oled_terminalWrite("abcd");
     
     // oled_terminalWrite( "B" );
     // sleep_ms( 500 );
@@ -69,14 +71,15 @@ int main( void )
     // oled_terminalWrite( "world!" );
     // sleep_ms( 500 );
 
-    // char str[20] = {0};
-    // for( ;; )
-    // {
-    //     sprintf( str, "%ld", (uint32_t) millis() );
-    //     oled_terminalWrite( str );
-    //     sleep_ms(500);
-    // }
+    char str[10] = {0};
+    for( ;; )
+    {
+        sprintf( str, "%ld", (uint32_t) millis() );
+        oled_terminalWrite( str );
+        sleep_ms(500);
+    }
 
+    // oled_setPixel(0, 127, 0xFFF0);
 
     // oled_setPixel(0, 0, 0b1111100000000000);
     // oled_writeChar(0, 0, 'B', 24U, 0xFFFF );
