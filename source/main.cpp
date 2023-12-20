@@ -7,9 +7,13 @@
 
 #include "oled.hpp"
 
+inline uint64_t micros()
+{
+    return to_us_since_boot( get_absolute_time() );
+}
 inline uint64_t millis()
 {
-    return to_us_since_boot( get_absolute_time() ) / 1000ULL;
+    return micros() / 1000ULL;
 }
 
 int main( void )
@@ -40,7 +44,7 @@ int main( void )
     // }
     // // oled_fill( 0, 0, 128, 0, 0xFFFF );
 
-    int result = oled_terminalInit( 20U, 0b0000000000011111U );
+    int result = oled_terminalInit( 24U, 0b0000000000011111U );
     if( result != 0 )
     {
         printf("terminal init failed with exit code %d\n", result);
@@ -56,7 +60,7 @@ int main( void )
     sleep_ms( delay );
     oled_terminalWrite("mnop");
     sleep_ms( delay );
-    oled_terminalWrite("qrst");
+    oled_terminalWrite("abcdefghijklmnop");
     sleep_ms( delay );
     oled_terminalWrite("uvwx");
     sleep_ms( 500 );
@@ -74,9 +78,9 @@ int main( void )
     char str[10] = {0};
     for( ;; )
     {
-        sprintf( str, "%ld", (uint32_t) millis() );
+        sprintf( str, "%ld", (uint32_t) micros() );
         oled_terminalWrite( str );
-        sleep_ms(500);
+        sleep_ms( 50 );
     }
 
     // oled_setPixel(0, 127, 0xFFF0);
