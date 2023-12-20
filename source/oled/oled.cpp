@@ -1,5 +1,10 @@
 #include "oled.hpp"
 
+// TEMP
+#include "pico/time.h"
+inline uint64_t micros() { return to_us_since_boot( get_absolute_time() ); }
+// END OF TEMP
+
 #include <stdio.h> // Just for debugging
 #ifdef OLED_INCLUDE_LOADING_BAR_ROUND
 #include <math.h>
@@ -45,11 +50,9 @@ static uint8_t m_terminalFontSize;
 static uint16_t m_terminalFontColour;
 static uint8_t m_terminalCurrentLine;
 static tFontTable* m_terminalFontTablePtr;
-static uint8_t m_bitmapBytesPerRow;
-static uint16_t m_bitmapCallocSize;
+static uint8_t m_terminalBitmapBytesPerRow;
+static uint16_t m_terminalBitmapCallocSize;
 #endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
-
-static uint16_t TEMP_callocSize;
 
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 void m_terminalPushBitmap( void );
@@ -641,20 +644,18 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour )
 
     // Need enough bits to cover the the screen width, might have a few bits unused per row
     // This is so that bytes for each row align, which makes scrolling much much easier
-    uint16_t bitmapArraySize = (uint16_t) m_displayWidth / 8U;
+    m_terminalBitmapBytesPerRow = (uint16_t) m_displayWidth / 8U;
     // Round up if needed
-    if( ( (uint16_t) m_displayWidth / 8U ) != 0U )
-        ++bitmapArraySize;
+    if( ( (uint16_t) m_displayWidth % 8U ) != 0U )
+        ++m_terminalBitmapBytesPerRow;
     // Now need this many bytes per row
-    bitmapArraySize *= m_displayHeight;
+    m_terminalBitmapCallocSize = m_terminalBitmapBytesPerRow * m_displayHeight;
 
-    TEMP_callocSize = bitmapArraySize; // TEMP
-
-    m_terminalBitmapPtr1 = (uint8_t*) calloc( bitmapArraySize, sizeof( uint8_t ) );
+    m_terminalBitmapPtr1 = (uint8_t*) calloc( m_terminalBitmapCallocSize, sizeof( uint8_t ) );
     if( m_terminalBitmapPtr1 == NULL )
         return 1; // Memory allocation failed
 
-    m_terminalBitmapPtr2 = (uint8_t*) calloc( bitmapArraySize, sizeof( uint8_t ) );
+    m_terminalBitmapPtr2 = (uint8_t*) calloc( m_terminalBitmapCallocSize, sizeof( uint8_t ) );
     if( m_terminalBitmapPtr1 == NULL )
     {
         // Memory allocation failed
@@ -673,10 +674,8 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour )
 
 void oled_terminalWrite( const char text[] )
 {
-    uint8_t* bitmapPtr;
-    bitmapPtr = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
-
-    // For terminal write, we want to copy the 
+    // uint8_t* bitmapPtr;
+    // bitmapPtr = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
 
     // // Have we ran out of vertical space and need to start scrolling?
     // uint8_t terminalHeightInLines = m_displayHeight / m_terminalFontSize;
@@ -705,37 +704,54 @@ void oled_terminalWrite( const char text[] )
     //     }
     // }
 
+    uint8_t* currentBitmapPtr;
+    uint8_t* desiredBitmapPtr;
+    if( m_terminalBitmapState == e_terminalBitmap1Next )
+    {
+        desiredBitmapPtr = m_terminalBitmapPtr1;
+        currentBitmapPtr = m_terminalBitmapPtr2;
+    }
+    else
+    {
+        desiredBitmapPtr = m_terminalBitmapPtr2;
+        currentBitmapPtr = m_terminalBitmapPtr1;
+    }
     // If we've ran out of room, scroll down when copying to the other bitmap
-    uint8_t terminalHeightInLines = ( m_displayHeight / m_terminalFontSize ) - 1; // -1 because counting starts from 0
+    uint8_t terminalHeightInLines = m_displayHeight / m_terminalFontSize;
     if( m_terminalCurrentLine == terminalHeightInLines )
     {
+        printf( "Scrolling\nterminalHeightInLines=%d\n", terminalHeightInLines );
+        uint16_t sourceByte = 0U;
+        // Shift everything up
+        while( ( sourceByte + ( (uint16_t) m_terminalBitmapBytesPerRow * m_terminalFontTablePtr->Height ) ) < m_terminalBitmapCallocSize )
+        {
+            desiredBitmapPtr[sourceByte] = currentBitmapPtr[sourceByte + ( m_terminalBitmapBytesPerRow * m_terminalFontTablePtr->Height )];
+            ++sourceByte;
+        }
 
+        // Erase the bottom of the bitmap
+        sourceByte = ( m_displayHeight - m_terminalFontSize ) * m_displayWidth;
+        while( sourceByte < m_terminalBitmapCallocSize )
+        {
+            desiredBitmapPtr[sourceByte] = 0x00; // Background colour
+            ++sourceByte;
+        }
     }
     // If we still have room, directly copy one bitmap to the other
     else
     {
-
+        printf("Copying\n");
+        // This copy takes about 50 microseconds for a 128x128
+        for( uint16_t index = 0U; index < m_terminalBitmapCallocSize; index++ )
+        {
+            desiredBitmapPtr[index] = currentBitmapPtr[index];
+        }
     }
     
     // --- Add the bitmap to the display ---
     uint8_t xCurrentTextPosition = 0U;
     uint8_t yCurrentTextPosition = m_terminalCurrentLine * m_terminalFontSize;
     uint8_t characterWidth = m_terminalFontTablePtr->Width;
-    // uint8_t pixelPositionX;
-    // uint8_t pixelPositionY;
-
-    // // Terminal init function ensures the font size is valid
-    // // Get character width
-    // if( m_terminalFontSize == 8U )
-    //     characterWidth = OLED_FONT8_WIDTH;
-    // else if( m_terminalFontSize == 12U )
-    //     characterWidth = OLED_FONT12_WIDTH;
-    // else if( m_terminalFontSize == 16U )
-    //     characterWidth = OLED_FONT16_WIDTH;
-    // else if( m_terminalFontSize == 20U )
-    //     characterWidth = OLED_FONT20_WIDTH;
-    // else if( m_terminalFontSize == 24U )
-    //     characterWidth = OLED_FONT24_WIDTH;
     
     // Put the characters on the bitmap
     while( *text != 0 )
@@ -758,7 +774,7 @@ void oled_terminalWrite( const char text[] )
     m_terminalPushBitmap();
 
     // Update variables
-    if( m_terminalCurrentLine != terminalHeightInLines )
+    if( m_terminalCurrentLine < terminalHeightInLines )
         ++m_terminalCurrentLine;
 }
 
@@ -852,29 +868,17 @@ void m_terminalPushBitmap( void )
     uint8_t* currentStateBitmap;
     if( m_terminalBitmapState == e_terminalBitmap1Next )
     {
-        printf( "Bitmap 1 about to be pushed\n" ); //TEMP
         desiredStateBitmap = m_terminalBitmapPtr1;
         currentStateBitmap = m_terminalBitmapPtr2;
     }
     else
     {
-        printf( "Bitmap 2 about to be pushed\n" ); //TEMP
         desiredStateBitmap = m_terminalBitmapPtr2;
         currentStateBitmap = m_terminalBitmapPtr1;
     }
 
     while( displayPositionY != m_displayHeight )
     {
-
-        // if( ( desiredStateBitmap[byteNumber] & ( 1 << bitPosition ) ) == 0 )
-        // {
-        //     oled_setPixel( displayPositionX, displayPositionY, 0x0000U ); // Background colour
-        // }
-        // else
-        // {
-        //     oled_setPixel( displayPositionX, displayPositionY, m_terminalFontColour ); // Text colour
-        // }
-
         // Check if a pixel needs to be turned on
         if( ( ( currentStateBitmap[byteNumber] & ( 1 << bitPosition ) ) == 0 ) &&
             ( ( desiredStateBitmap[byteNumber] & ( 1 << bitPosition ) ) != 0 ) )
@@ -882,8 +886,8 @@ void m_terminalPushBitmap( void )
             oled_setPixel( displayPositionX, displayPositionY, m_terminalFontColour );
         }
         // Check if a pixel needs to be turned off
-        else if( ( ( currentStateBitmap[byteNumber] & ( 1 << bitPosition ) ) == 0 ) &&
-            ( ( desiredStateBitmap[byteNumber] & ( 1 << bitPosition ) ) != 0 ) )
+        else if( ( ( currentStateBitmap[byteNumber] & ( 1 << bitPosition ) ) != 0 ) &&
+            ( ( desiredStateBitmap[byteNumber] & ( 1 << bitPosition ) ) == 0 ) )
         {
             oled_setPixel( displayPositionX, displayPositionY, 0x0000 );
         }
