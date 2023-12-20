@@ -45,6 +45,8 @@ static uint8_t m_terminalFontSize;
 static uint16_t m_terminalFontColour;
 static uint8_t m_terminalCurrentLine;
 static tFontTable* m_terminalFontTablePtr;
+static uint8_t m_bitmapBytesPerRow;
+static uint16_t m_bitmapCallocSize;
 #endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 
 static uint16_t TEMP_callocSize;
@@ -674,31 +676,45 @@ void oled_terminalWrite( const char text[] )
     uint8_t* bitmapPtr;
     bitmapPtr = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
 
-    // Have we ran out of vertical space and need to start scrolling?
-    uint8_t terminalHeightInLines = m_displayHeight / m_terminalFontSize;
+    // For terminal write, we want to copy the 
+
+    // // Have we ran out of vertical space and need to start scrolling?
+    // uint8_t terminalHeightInLines = m_displayHeight / m_terminalFontSize;
+    // if( m_terminalCurrentLine == terminalHeightInLines )
+    // {
+    //     uint8_t bytesPerRow = m_displayWidth / 8U;
+    //     if( ( m_displayWidth % 8U ) != 0 )
+    //         ++bytesPerRow;
+        
+    //     uint16_t bitmapSize = bytesPerRow * m_displayHeight;
+
+    //     uint16_t sourceByte = 0U;
+    //     // Shift everything up
+    //     while( ( sourceByte + ( (uint16_t) bytesPerRow * m_terminalFontTablePtr->Height ) ) < bitmapSize )
+    //     {
+    //         bitmapPtr[sourceByte] = bitmapPtr[sourceByte + ( bytesPerRow * m_terminalFontTablePtr->Height )];
+    //         ++sourceByte;
+    //     }
+
+    //     // Erase the bottom of the bitmap
+    //     sourceByte = ( m_displayHeight - m_terminalFontSize ) * m_displayWidth;
+    //     while( sourceByte < bitmapSize )
+    //     {
+    //         bitmapPtr[sourceByte] = 0x00; // Background colour
+    //         ++sourceByte;
+    //     }
+    // }
+
+    // If we've ran out of room, scroll down when copying to the other bitmap
+    uint8_t terminalHeightInLines = ( m_displayHeight / m_terminalFontSize ) - 1; // -1 because counting starts from 0
     if( m_terminalCurrentLine == terminalHeightInLines )
     {
-        uint8_t bytesPerRow = m_displayWidth / 8U;
-        if( ( m_displayWidth % 8U ) != 0 )
-            ++bytesPerRow;
-        
-        uint16_t bitmapSize = bytesPerRow * m_displayHeight;
 
-        uint16_t sourceByte = 0U;
-        // Shift everything up
-        while( ( sourceByte + ( (uint16_t) bytesPerRow * m_terminalFontTablePtr->Height ) ) < bitmapSize )
-        {
-            bitmapPtr[sourceByte] = bitmapPtr[sourceByte + ( bytesPerRow * m_terminalFontTablePtr->Height )];
-            ++sourceByte;
-        }
+    }
+    // If we still have room, directly copy one bitmap to the other
+    else
+    {
 
-        // Erase the bottom of the bitmap
-        sourceByte = ( m_displayHeight - m_terminalFontSize ) * m_displayWidth;
-        while( sourceByte < bitmapSize )
-        {
-            bitmapPtr[sourceByte] = 0x00; // Background colour
-            ++sourceByte;
-        }
     }
     
     // --- Add the bitmap to the display ---
