@@ -674,8 +674,6 @@ void oled_terminalWrite( const char text[] )
     uint8_t* bitmapPtr;
     bitmapPtr = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
 
-    m_terminalPushBitmap();
-
     // Have we ran out of vertical space and need to start scrolling?
     uint8_t terminalHeightInLines = m_displayHeight / m_terminalFontSize;
     if( m_terminalCurrentLine == terminalHeightInLines )
@@ -688,9 +686,9 @@ void oled_terminalWrite( const char text[] )
 
         uint16_t sourceByte = 0U;
         // Shift everything up
-        while( ( sourceByte + (uint16_t) bytesPerRow ) < bitmapSize )
+        while( ( sourceByte + ( (uint16_t) bytesPerRow * m_terminalFontTablePtr->Height ) ) < bitmapSize )
         {
-            bitmapPtr[sourceByte] = bitmapPtr[sourceByte + bytesPerRow];
+            bitmapPtr[sourceByte] = bitmapPtr[sourceByte + ( bytesPerRow * m_terminalFontTablePtr->Height )];
             ++sourceByte;
         }
 
@@ -838,11 +836,13 @@ void m_terminalPushBitmap( void )
     uint8_t* currentStateBitmap;
     if( m_terminalBitmapState == e_terminalBitmap1Next )
     {
+        printf( "Bitmap 1 about to be pushed\n" ); //TEMP
         desiredStateBitmap = m_terminalBitmapPtr1;
         currentStateBitmap = m_terminalBitmapPtr2;
     }
     else
     {
+        printf( "Bitmap 2 about to be pushed\n" ); //TEMP
         desiredStateBitmap = m_terminalBitmapPtr2;
         currentStateBitmap = m_terminalBitmapPtr1;
     }
