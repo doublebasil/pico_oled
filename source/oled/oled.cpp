@@ -833,19 +833,45 @@ void m_terminalPushBitmap( void )
     uint8_t displayPositionX = 0U;
     uint8_t displayPositionY = 0U;
     // Check which bitmap to push
-    uint8_t* bitmap = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
+    // uint8_t* bitmap = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
+    uint8_t* desiredStateBitmap;
+    uint8_t* currentStateBitmap;
+    if( m_terminalBitmapState == e_terminalBitmap1Next )
+    {
+        desiredStateBitmap = m_terminalBitmapPtr1;
+        currentStateBitmap = m_terminalBitmapPtr2;
+    }
+    else
+    {
+        desiredStateBitmap = m_terminalBitmapPtr2;
+        currentStateBitmap = m_terminalBitmapPtr1;
+    }
 
     while( displayPositionY != m_displayHeight )
     {
 
-        if( ( bitmap[byteNumber] & ( 1 << bitPosition ) ) == 0 )
+        // if( ( desiredStateBitmap[byteNumber] & ( 1 << bitPosition ) ) == 0 )
+        // {
+        //     oled_setPixel( displayPositionX, displayPositionY, 0x0000U ); // Background colour
+        // }
+        // else
+        // {
+        //     oled_setPixel( displayPositionX, displayPositionY, m_terminalFontColour ); // Text colour
+        // }
+
+        // Check if a pixel needs to be turned on
+        if( ( ( currentStateBitmap[byteNumber] & ( 1 << bitPosition ) ) == 0 ) &&
+            ( ( desiredStateBitmap[byteNumber] & ( 1 << bitPosition ) ) != 0 ) )
         {
-            oled_setPixel( displayPositionX, displayPositionY, 0x0000U ); // Background colour
+            oled_setPixel( displayPositionX, displayPositionY, m_terminalFontColour );
         }
-        else
+        // Check if a pixel needs to be turned off
+        else if( ( ( currentStateBitmap[byteNumber] & ( 1 << bitPosition ) ) == 0 ) &&
+            ( ( desiredStateBitmap[byteNumber] & ( 1 << bitPosition ) ) != 0 ) )
         {
-            oled_setPixel( displayPositionX, displayPositionY, m_terminalFontColour ); // Text colour
+            oled_setPixel( displayPositionX, displayPositionY, 0x0000 );
         }
+        // Otherwise leave the screen as it is
         
         ++bitPosition;
         if( bitPosition == 8U )
