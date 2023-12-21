@@ -50,7 +50,7 @@ int main( void )
     // }
     // // oled_fill( 0, 0, 128, 0, 0xFFFF );
 
-    int result = oled_terminalInit( 16U, 0b0000000000011111U );
+    int result = oled_terminalInit( 16U, 0b0000011111100000U );
     if( result != 0 )
     {
         printf("terminal init failed with exit code %d\n", result);
@@ -61,6 +61,7 @@ int main( void )
     int height = (int) oled_terminalGetHeightInCharacters();
     char txt[20];
 
+    oled_terminalSetLine( 5 );
     oled_terminalWrite("Test 1");
     S
     oled_terminalSetLine( 3 );

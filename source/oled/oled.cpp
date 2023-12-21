@@ -728,6 +728,9 @@ void oled_terminalSetLine( uint8_t line )
     if( ( line >= 0U ) && ( line <= terminalMaxLine ) )
         m_terminalCurrentLine = line;
     // Otherwise not a valid line number
+    
+    // If the last line written was temp, you've moved so it won't be getting overwritten
+    m_terminalIsLineTemp = false;
 }
 
 void oled_terminalDeinit( void ) 
@@ -841,11 +844,13 @@ static inline void m_terminalWrite( const char text[] )
         {
             desiredBitmapPtr[bitmapIndex] = currentBitmapPtr[bitmapIndex];
         }
-        // And set the rest of the bitmap to 0
-        for( uint16_t bitmapIndex = copyEndIndex; bitmapIndex < m_terminalBitmapCallocSize; bitmapIndex++ )
-        {
-            desiredBitmapPtr[bitmapIndex] = 0U;
-        }
+        
+        // And set the temporary line which is being overwritten to 0
+        uint16_t eraseEndIndex = copyEndIndex + ( m_terminalFontTablePtr->Height * m_terminalBitmapBytesPerRow );
+        // Ensure we aren't writing out of array bounds
+        eraseEndIndex = ( eraseEndIndex < m_terminalBitmapCallocSize ) ? eraseEndIndex : m_terminalBitmapCallocSize;
+        for( uint16_t bitmapIndex = copyEndIndex; bitmapIndex < eraseEndIndex; bitmapIndex++ )
+            desiredBitmapPtr[0] = 0x00U;
     }
     // If we've ran out of lines, scroll down when copying to the other bitmap
     else if( m_terminalCurrentLine == terminalHeightInLines )
@@ -888,7 +893,7 @@ static inline void m_terminalWrite( const char text[] )
         // Determine erase end point
         uint16_t eraseEndIndex = index + ( m_terminalFontTablePtr->Height * m_terminalBitmapBytesPerRow);
         // Ensure we won't be writing out of bounds
-        eraseEndIndex = ( eraseEndIndex < m_terminalBitmapCallocSize ) ? eraseEndIndex : m_terminalBitmapCallocSize; // I'm not sure this is a good line
+        eraseEndIndex = ( eraseEndIndex < m_terminalBitmapCallocSize ) ? eraseEndIndex : m_terminalBitmapCallocSize;
         while( index < eraseEndIndex )
         {
             desiredBitmapPtr[index] = 0x00U;
