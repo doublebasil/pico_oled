@@ -37,9 +37,9 @@ int main( void )
         return 1;
     }
 
-    oled_writeText( 10, 10, "hello", 12U, 0xFFFF, false );
-    sleep_ms( 1000ULL );
-    oled_clear();
+    // oled_writeText( 10, 10, "hello", 12U, 0xFFFF, false );
+    // sleep_ms( 1000ULL );
+    // oled_clear();
 
     // for( uint16_t p = 0; p < 1000U; ++p )
     // {
@@ -71,6 +71,7 @@ int main( void )
     oled_terminalWrite("yz");
     sleep_ms( 500 );
     oled_terminalWrite("abcd");
+    oled_terminalWrite("abcd");
     
     // oled_terminalWrite( "B" );
     // sleep_ms( 500 );
@@ -78,6 +79,13 @@ int main( void )
     // sleep_ms( 200 );
     // oled_terminalWrite( "world!" );
     // sleep_ms( 500 );
+
+    oled_terminalDeinit();
+    sleep_ms( 1000 );
+    oled_clear();
+    oled_terminalWrite( "BAD" );
+    sleep_ms( 500 );
+    oled_terminalInit( 8U, 0b1111100000000000 );
 
     char str[10] = {0};
     for( ;; )

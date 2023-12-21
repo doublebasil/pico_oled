@@ -52,6 +52,7 @@ static uint8_t m_terminalCurrentLine;
 static tFontTable* m_terminalFontTablePtr;
 static uint8_t m_terminalBitmapBytesPerRow;
 static uint16_t m_terminalBitmapCallocSize;
+static bool m_terminalIsLineTemp;
 #endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 /* --- LOADING BAR RELATED MODULE SCOPE VARIABLES --- */
 #ifdef OLED_INCLUDE_LOADING_BAR_ROUND
@@ -578,7 +579,7 @@ void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, const char text[],
     {
         if( useTextWrapping == true )
         {
-            // Have we've gone too far to the right
+            // Have we gone too far to the right
             if( ( xCurrentTextPosition + characterWidth ) > m_displayWidth )
             {
                 xCurrentTextPosition = xStartPos;
@@ -674,12 +675,16 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour )
     m_terminalFontColour = colour;
     m_terminalCurrentLine = 0U;
     m_terminalBitmapState = e_terminalBitmap1Next;
+    m_terminalIsLineTemp = false;
 
     return 0; // Success
 }
 
 void oled_terminalWrite( const char text[] )
 {
+    if( m_terminalBitmapState == e_terminalUninitialised )
+        return; // Terminal not ininitialised
+
     uint8_t* currentBitmapPtr; // What the screen currently has
     uint8_t* desiredBitmapPtr; // We need to change this bitmap to what we want the screen to have next
     if( m_terminalBitmapState == e_terminalBitmap1Next )
@@ -692,8 +697,12 @@ void oled_terminalWrite( const char text[] )
         desiredBitmapPtr = m_terminalBitmapPtr2;
         currentBitmapPtr = m_terminalBitmapPtr1;
     }
-    // If we've ran out of lines, scroll down when copying to the other bitmap
+
     uint8_t terminalHeightInLines = m_displayHeight / m_terminalFontSize;
+
+    // If the last line was temporary 
+
+    // If we've ran out of lines, scroll down when copying to the other bitmap
     if( m_terminalCurrentLine == terminalHeightInLines )
     {
         uint16_t sourceByte = 0U;
@@ -759,13 +768,28 @@ void oled_terminalWrite( const char text[] )
     // Update module scope variables
     if( m_terminalCurrentLine < terminalHeightInLines )
         ++m_terminalCurrentLine;
+    m_terminalIsLineTemp = false;
 }
 
-void oled_terminalWriteTemp( const char text[] ) {} // TODO
+void oled_terminalWriteTemp( const char text[] ) 
+{
+
+
+    m_terminalIsLineTemp = true;
+} // TODO
 
 void oled_terminalClear( void ) {} // TODO
 
-void oled_terminalDeinit( void ) {}
+void oled_terminalDeinit( void ) 
+{
+    // Free the memorey and set the bitmap pointers to NULL
+    free( m_terminalBitmapPtr1 );
+    m_terminalBitmapPtr1 = NULL;
+    free( m_terminalBitmapPtr2 );
+    m_terminalBitmapPtr2 = NULL;
+    // Change the bitmap state module scope variable to uninitialised
+    m_terminalBitmapState = e_terminalUninitialised;
+}
 #endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
 
 /*
