@@ -50,35 +50,35 @@ int main( void )
     // }
     // // oled_fill( 0, 0, 128, 0, 0xFFFF );
 
-    int result = oled_terminalInit( 16U, 0b0000011111100000U );
-    if( result != 0 )
-    {
-        printf("terminal init failed with exit code %d\n", result);
-        for( ;; )
-            sleep_ms( 1000U );
-    }
+    // int result = oled_terminalInit( 16U, 0b0000011111100000U );
+    // if( result != 0 )
+    // {
+    //     printf("terminal init failed with exit code %d\n", result);
+    //     for( ;; )
+    //         sleep_ms( 1000U );
+    // }
 
-    int height = (int) oled_terminalGetHeightInCharacters();
-    char txt[20];
+    // int height = (int) oled_terminalGetHeightInCharacters();
+    // char txt[20];
 
-    oled_terminalSetLine( 5 );
-    oled_terminalWrite("Test 1");
-    S
-    oled_terminalSetLine( 3 );
-    S
-    oled_terminalWriteTemp("Test 2");
-    S
-    oled_terminalWrite("Test 3");
-    S
-    oled_terminalSetLine( 0 );
-    S
+    // oled_terminalSetLine( 5 );
+    // oled_terminalWrite("Test 1");
+    // S
+    // oled_terminalSetLine( 3 );
+    // S
+    // oled_terminalWriteTemp("Test 2");
+    // S
+    // oled_terminalWrite("Test 3");
+    // S
+    // oled_terminalSetLine( 0 );
+    // S
 
-    for( int i = 0; i < height; i++ )
-    {
-        sprintf(txt, "%ld", (uint32_t) micros());
-        oled_terminalWrite(txt);
-        S
-    }
+    // for( int i = 0; i < height; i++ )
+    // {
+    //     sprintf(txt, "%ld", (uint32_t) micros());
+    //     oled_terminalWrite(txt);
+    //     S
+    // }
 
     printf( "End\n" );
     for( ;; ) 

@@ -263,6 +263,60 @@ void oled_fill( uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint16_t colour 
     }
 }
 
+#ifdef OLED_INCLUDE_TEST_FUNCTION
+void oled_test( void ) // Needs rewriting
+{
+    uint16_t color = 0;
+    uint8_t drawMode = 0;
+    uint16_t red;
+    uint16_t green;
+    uint16_t blue;
+    m_chipSelect();
+    for( ;; )
+    {
+        for( uint8_t y = 0U; y < m_displayHeight; ++y )
+        {
+            for( uint8_t x = 0U; x < m_displayWidth; ++x )
+            {
+                if( drawMode == 0 )
+                    color = ( ( x / 4 ) & 0b11111 ) << ( 5 + 6 );
+                    // color = ( (uint16_t) x * (uint16_t) x) + ( (uint16_t) y * (uint16_t) y);
+                else if( drawMode == 1 )
+                    color = ( ( y / 3 ) & 0b111111 ) << ( 5 );
+                    // color = ( (uint16_t) x * (uint16_t) x) - ( (uint16_t) y * (uint16_t) y);
+                else if( drawMode == 2)
+                    color = ( ( x / 4 ) & 0b11111 );
+                else if (drawMode == 3 )
+                {
+                    red = ( x / 4 ) & 0b11111;
+                    green = ( ( x + y ) / 4 ) & 0b111111;
+                    blue = ( y / 4 ) & 0b11111;
+                    color = ( red << ( 5 + 6 ) ) + ( green << 5 ) + blue;
+                }
+
+                m_writeReg(0x15);
+                m_writeData(x);
+                m_writeData(x);
+                m_writeReg(0x75);
+                m_writeData(y);
+                m_writeData(y);
+                // fill!
+                m_writeReg(0x5C);   
+                
+                // The 16 bits are sent in two seperate bytes
+                m_writeData(color >> 8);
+                m_writeData(color);
+            }
+        }
+        sleep_ms( 1000U );
+        ++drawMode;
+        if( drawMode == 4 )
+            drawMode = 0;
+    }
+    
+}
+#endif /* OLED_INCLUDE_TEST_FUNCTION */
+
 #ifdef OLED_INCLUDE_LOADING_BAR_HORIZONTAL
 void oled_loadingBarHorizontal( uint8_t barX1, uint8_t barY1, uint8_t barX2, 
     uint8_t barY2, uint16_t permille, uint16_t colour, bool hasBorder )
@@ -407,60 +461,6 @@ void oled_loadingBarRound( uint8_t centreX, uint8_t centreY, uint8_t outerRadius
     }
 }
 #endif /* OLED_INCLUDE_LOADING_BAR_ROUND */
-
-#ifdef OLED_INCLUDE_TEST_FUNCTION
-void oled_test( void ) // Needs rewriting
-{
-    uint16_t color = 0;
-    uint8_t drawMode = 0;
-    uint16_t red;
-    uint16_t green;
-    uint16_t blue;
-    m_chipSelect();
-    for( ;; )
-    {
-        for( uint8_t y = 0U; y < m_displayHeight; ++y )
-        {
-            for( uint8_t x = 0U; x < m_displayWidth; ++x )
-            {
-                if( drawMode == 0 )
-                    color = ( ( x / 4 ) & 0b11111 ) << ( 5 + 6 );
-                    // color = ( (uint16_t) x * (uint16_t) x) + ( (uint16_t) y * (uint16_t) y);
-                else if( drawMode == 1 )
-                    color = ( ( y / 3 ) & 0b111111 ) << ( 5 );
-                    // color = ( (uint16_t) x * (uint16_t) x) - ( (uint16_t) y * (uint16_t) y);
-                else if( drawMode == 2)
-                    color = ( ( x / 4 ) & 0b11111 );
-                else if (drawMode == 3 )
-                {
-                    red = ( x / 4 ) & 0b11111;
-                    green = ( ( x + y ) / 4 ) & 0b111111;
-                    blue = ( y / 4 ) & 0b11111;
-                    color = ( red << ( 5 + 6 ) ) + ( green << 5 ) + blue;
-                }
-
-                m_writeReg(0x15);
-                m_writeData(x);
-                m_writeData(x);
-                m_writeReg(0x75);
-                m_writeData(y);
-                m_writeData(y);
-                // fill!
-                m_writeReg(0x5C);   
-                
-                // The 16 bits are sent in two seperate bytes
-                m_writeData(color >> 8);
-                m_writeData(color);
-            }
-        }
-        sleep_ms( 1000U );
-        ++drawMode;
-        if( drawMode == 4 )
-            drawMode = 0;
-    }
-    
-}
-#endif /* OLED_INCLUDE_TEST_FUNCTION */
 
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 void oled_writeChar( uint8_t x, uint8_t y, char character, uint8_t fontSize, uint16_t colour )
@@ -745,6 +745,9 @@ void oled_terminalDeinit( void )
 }
 #endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
 
+/* --- MODULE SCOPE FUNCTION IMPLEMENTATIONS ---------------------------------- */
+
+#if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 /*
  * Function: m_terminalWriteChar
  * --------------------
@@ -1005,6 +1008,7 @@ void m_terminalPushBitmap( void )
     else
         m_terminalBitmapState = e_terminalBitmap1Next;
 }
+#endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 
 /*
  * Function: m_displayInit

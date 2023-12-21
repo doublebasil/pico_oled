@@ -4,12 +4,12 @@
 /* Settings for this module ------------------------------------------------ */
 #define OLED_INCLUDE_TEST_FUNCTION
 #define OLED_INCLUDE_LOADING_BAR_HORIZONTAL
-#define OLED_INCLUDE_LOADING_BAR_ROUND
-#define OLED_INCLUDE_FONT8                      // Uses ~760 bytes
-#define OLED_INCLUDE_FONT12                     // Uses ~1144 bytes
-#define OLED_INCLUDE_FONT16                     // Uses ~3044 bytes
-#define OLED_INCLUDE_FONT20                     // Uses ~3804 bytes
-#define OLED_INCLUDE_FONT24                     // Uses ~6844 bytes
+// #define OLED_INCLUDE_LOADING_BAR_ROUND
+// #define OLED_INCLUDE_FONT8                      // Uses ~760 bytes
+// #define OLED_INCLUDE_FONT12                     // Uses ~1144 bytes
+// #define OLED_INCLUDE_FONT16                     // Uses ~3044 bytes
+// #define OLED_INCLUDE_FONT20                     // Uses ~3804 bytes
+// #define OLED_INCLUDE_FONT24                     // Uses ~6844 bytes
 #define OLED_WRITE_TEXT_CHARACTER_GAP     ( 0 ) // Number of pixels between characters
 
 #include <stdint.h>
@@ -72,6 +72,19 @@ void oled_setPixel( uint8_t x, uint8_t y, uint16_t colour );
  */
 void oled_fill( uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint16_t colour );
 
+#ifdef OLED_INCLUDE_TEST_FUNCTION
+/*
+ * Function: oled_test
+ * --------------------
+ * Removes everything on the screen, setting every pixel to black
+ *
+ * parameters: none
+ *
+ * returns: void
+ */
+void oled_test( void );
+#endif /* OLED_INCLUDE_TEST_FUNCTION */
+
 #ifdef OLED_INCLUDE_LOADING_BAR_HORIZONTAL
 /*
  * Function: oled_loadingBarHorizontal
@@ -113,19 +126,6 @@ void oled_loadingBarHorizontal( uint8_t barX1, uint8_t barY1, uint8_t barX2,
 void oled_loadingBarRound( uint8_t centreX, uint8_t centreY, uint8_t outerRadius, 
     uint8_t innerRadius, uint16_t permille, uint16_t colour, bool hasBorder );
 #endif /* OLED_INCLUDE_LOADING_BAR_ROUND */
-
-#ifdef OLED_INCLUDE_TEST_FUNCTION
-/*
- * Function: oled_test
- * --------------------
- * Removes everything on the screen, setting every pixel to black
- *
- * parameters: none
- *
- * returns: void
- */
-void oled_test( void );
-#endif /* OLED_INCLUDE_TEST_FUNCTION */
 
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 #define OLED_FONT8_WIDTH                ( 5 )
