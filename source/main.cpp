@@ -55,45 +55,66 @@ int main( void )
         for( ;; )
             sleep_ms( 1000U );
     }
-    uint16_t delay = 50;
-    oled_terminalWrite("a   ");
-    sleep_ms( delay );
-    oled_terminalWrite(" b  ");
-    sleep_ms( delay );
-    oled_terminalWrite("  c ");
-    sleep_ms( delay );
-    oled_terminalWrite("mnop");
-    sleep_ms( delay );
-    oled_terminalWrite("abcdefghijklmnop");
-    sleep_ms( delay );
-    oled_terminalWrite("uvwx");
-    sleep_ms( 500 );
-    oled_terminalWrite("yz");
-    sleep_ms( 500 );
-    oled_terminalWrite("abcd");
-    oled_terminalWrite("abcd");
-    
-    // oled_terminalWrite( "B" );
-    // sleep_ms( 500 );
-    // oled_terminalWrite( "Hello," );
-    // sleep_ms( 200 );
-    // oled_terminalWrite( "world!" );
-    // sleep_ms( 500 );
 
-    oled_terminalDeinit();
-    sleep_ms( 1000 );
-    oled_clear();
-    oled_terminalWrite( "BAD" );
-    sleep_ms( 500 );
-    oled_terminalInit( 8U, 0b1111100000000000 );
-
-    char str[10] = {0};
-    for( ;; )
+    char txt[20];
+    for( int i = 0; i < 9; i++ )
     {
-        sprintf( str, "%ld", (uint32_t) micros() );
-        oled_terminalWrite( str );
-        sleep_ms( 50 );
+        uint32_t t = (uint32_t) millis();
+        sprintf(txt, "T %ld", t);
+        oled_terminalWriteTemp(txt);
+        sleep_ms(500);
+        sprintf(txt, "P %ld", t);
+        oled_terminalWrite(txt);
+        sleep_ms(200);
     }
+    oled_terminalWriteTemp(".");
+    sleep_ms(300);
+    oled_terminalWriteTemp("..");
+    sleep_ms(300);
+    oled_terminalWriteTemp("...");
+    sleep_ms(500);
+    oled_terminalWrite("Done!");
+
+
+    // uint16_t delay = 50;
+    // oled_terminalWrite("a   ");
+    // sleep_ms( delay );
+    // oled_terminalWrite(" b  ");
+    // sleep_ms( delay );
+    // oled_terminalWrite("  c ");
+    // sleep_ms( delay );
+    // oled_terminalWriteTemp("mnop");
+    // sleep_ms( 1000 );
+    // oled_terminalWrite("abcdefghijklmnop");
+    // sleep_ms( 1000 );
+    // oled_terminalWrite("uvwx");
+    // sleep_ms( 500 );
+    // oled_terminalWrite("yz");
+    // sleep_ms( 500 );
+    // oled_terminalWrite("abcd");
+    // oled_terminalWrite("abcd");
+    
+    // // oled_terminalWrite( "B" );
+    // // sleep_ms( 500 );
+    // // oled_terminalWrite( "Hello," );
+    // // sleep_ms( 200 );
+    // // oled_terminalWrite( "world!" );
+    // // sleep_ms( 500 );
+
+    // oled_terminalDeinit();
+    // sleep_ms( 1000 );
+    // oled_clear();
+    // oled_terminalWrite( "BAD" );
+    // sleep_ms( 500 );
+    // oled_terminalInit( 8U, 0b1111100000000000 );
+
+    // char str[10] = {0};
+    // for( ;; )
+    // {
+    //     sprintf( str, "%ld", (uint32_t) micros() );
+    //     oled_terminalWrite( str );
+    //     sleep_ms( 50 );
+    // }
 
     // oled_setPixel(0, 127, 0xFFF0);
 

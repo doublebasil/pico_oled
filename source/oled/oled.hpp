@@ -184,6 +184,28 @@ void oled_writeText( uint8_t xStartPos, uint8_t yStartPos, const char text[],
 int oled_terminalInit( uint8_t fontSize, uint16_t colour );
 
 /*
+ * Function: oled_terminalGetWidthInCharacters
+ * --------------------
+ * Return the width of the terminal in characters
+ *
+ * parameters: none
+ *
+ * returns: uint8_t width of terminal in characters
+ */
+uint8_t oled_terminalGetWidthInCharacters();
+
+/*
+ * Function: oled_terminalGetHeightInCharacters
+ * --------------------
+ * Return the height of the terminal in lines
+ *
+ * parameters: none
+ *
+ * returns: uint8_t height of terminal in lines
+ */
+uint8_t oled_terminalGetHeightInCharacters();
+
+/*
  * Function: oled_terminalWrite
  * --------------------
  * Write a line to the terminal

@@ -92,6 +92,7 @@ static inline void m_writeData( uint8_t data );
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 void m_terminalPushBitmap( void );
 static inline void m_terminalWriteChar( char character, uint8_t textOriginX, uint8_t textOriginY );
+static inline void m_terminalWrite( const char text[] );
 #endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 /* --- LOADING BAR RELATED MODULE SCOPE FUNCTIONS --- */
 #ifdef OLED_INCLUDE_LOADING_BAR_ROUND
@@ -680,91 +681,21 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour )
     return 0; // Success
 }
 
+uint8_t oled_terminalGetWidthInCharacters()
+{
+    return m_displayWidth / ( m_terminalFontTablePtr->Width + OLED_WRITE_TEXT_CHARACTER_GAP );
+}
+
+uint8_t oled_terminalGetHeightInCharacters()
+{
+    return m_displayHeight / m_terminalFontSize;
+}
+
 void oled_terminalWrite( const char text[] )
 {
-    if( m_terminalBitmapState == e_terminalUninitialised )
-        return; // Terminal not ininitialised
-
-    uint8_t* currentBitmapPtr; // What the screen currently has
-    uint8_t* desiredBitmapPtr; // We need to change this bitmap to what we want the screen to have next
-    if( m_terminalBitmapState == e_terminalBitmap1Next )
-    {
-        desiredBitmapPtr = m_terminalBitmapPtr1;
-        currentBitmapPtr = m_terminalBitmapPtr2;
-    }
-    else
-    {
-        desiredBitmapPtr = m_terminalBitmapPtr2;
-        currentBitmapPtr = m_terminalBitmapPtr1;
-    }
-
+    m_terminalWrite( text );
+    
     uint8_t terminalHeightInLines = m_displayHeight / m_terminalFontSize;
-
-    // If the last line was temporary 
-
-    // If we've ran out of lines, scroll down when copying to the other bitmap
-    if( m_terminalCurrentLine == terminalHeightInLines )
-    {
-        uint16_t sourceByte = 0U;
-        // Shift everything up
-        while( ( sourceByte + ( (uint16_t) m_terminalBitmapBytesPerRow * m_terminalFontTablePtr->Height ) ) < m_terminalBitmapCallocSize )
-        {
-            desiredBitmapPtr[sourceByte] = currentBitmapPtr[sourceByte + ( m_terminalBitmapBytesPerRow * m_terminalFontTablePtr->Height )];
-            ++sourceByte;
-        }
-
-        // Erase the bottom of the bitmap, so we can put our own text on it
-        sourceByte = ( terminalHeightInLines - 1 ) * m_terminalFontSize * m_terminalBitmapBytesPerRow;
-        while( sourceByte < m_terminalBitmapCallocSize )
-        {
-            desiredBitmapPtr[sourceByte] = 0x00U; // Background colour
-            ++sourceByte;
-        }
-    }
-    // If we have room and don't need to scroll, directly copy one bitmap to the other
-    else
-    {
-        // This copy takes about 50 microseconds for a 128x128
-        for( uint16_t index = 0U; index < m_terminalBitmapCallocSize; index++ )
-        {
-            desiredBitmapPtr[index] = currentBitmapPtr[index];
-        }
-    }
-    
-    // --- Add the text to the bitmap ---
-    // These positions are of the glyph origins
-    uint8_t xCurrentTextPosition = 0U;
-    uint8_t yCurrentTextPosition;
-    if( m_terminalCurrentLine == terminalHeightInLines )
-    {
-        // If the display just scrolled, we need to write on the previous line else we'll be writing off the display
-        yCurrentTextPosition = ( m_terminalCurrentLine - 1 ) * m_terminalFontSize;
-    }
-    else
-        yCurrentTextPosition = m_terminalCurrentLine * m_terminalFontSize;
-    
-    uint8_t characterWidth = m_terminalFontTablePtr->Width;
-    
-    // Put the characters on the bitmap
-    while( *text != 0 )
-    {
-        // Check if we've gone too far to the right
-        if( ( xCurrentTextPosition + characterWidth ) > m_displayWidth )
-        {
-            // No text wrapping implemented for the terminal so just stop
-            break;
-        }
-        
-        // Write the character
-        m_terminalWriteChar( *text, xCurrentTextPosition, yCurrentTextPosition );
-
-        ++text;
-        xCurrentTextPosition += characterWidth + OLED_WRITE_TEXT_CHARACTER_GAP;
-    }
-
-    // Push the bitmap
-    m_terminalPushBitmap();
-
     // Update module scope variables
     if( m_terminalCurrentLine < terminalHeightInLines )
         ++m_terminalCurrentLine;
@@ -773,10 +704,11 @@ void oled_terminalWrite( const char text[] )
 
 void oled_terminalWriteTemp( const char text[] ) 
 {
-
-
+    m_terminalWrite( text );
+    
+    // Don't update m_terminalCurrentLine for the temp function
     m_terminalIsLineTemp = true;
-} // TODO
+}
 
 void oled_terminalClear( void ) {} // TODO
 
@@ -840,6 +772,111 @@ static inline void m_terminalWriteChar( char character, uint8_t textOriginX, uin
         }
         ++fontTableIndex;
     }
+
+}
+
+static inline void m_terminalWrite( const char text[] )
+{
+    if( m_terminalBitmapState == e_terminalUninitialised )
+        return; // Terminal not ininitialised
+
+    uint8_t* currentBitmapPtr; // What the screen currently has
+    uint8_t* desiredBitmapPtr; // We need to change this bitmap to what we want the screen to have next
+    if( m_terminalBitmapState == e_terminalBitmap1Next )
+    {
+        desiredBitmapPtr = m_terminalBitmapPtr1;
+        currentBitmapPtr = m_terminalBitmapPtr2;
+    }
+    else
+    {
+        desiredBitmapPtr = m_terminalBitmapPtr2;
+        currentBitmapPtr = m_terminalBitmapPtr1;
+    }
+
+    uint8_t terminalHeightInLines = m_displayHeight / m_terminalFontSize;
+
+    // If the last line was copy from the previous bitmap except for the temporary line
+    if( ( m_terminalIsLineTemp == true ) )
+    {
+        // Copy everything except the previous line
+        uint16_t copyEndIndex;
+        if( m_terminalCurrentLine != terminalHeightInLines )
+            copyEndIndex = (uint16_t) m_terminalCurrentLine * (uint16_t) m_terminalBitmapBytesPerRow * (uint16_t) m_terminalFontSize;
+        else
+            copyEndIndex = (uint16_t) ( m_terminalCurrentLine - 1 ) * (uint16_t) m_terminalBitmapBytesPerRow * (uint16_t) m_terminalFontSize;
+        printf("copyEndIndex=%d\n", copyEndIndex);
+        for( uint16_t bitmapIndex = 0U; bitmapIndex < copyEndIndex; bitmapIndex++ )
+        {
+            desiredBitmapPtr[bitmapIndex] = currentBitmapPtr[bitmapIndex];
+        }
+        // And set the rest of the bitmap to 0
+        for( uint16_t bitmapIndex = copyEndIndex; bitmapIndex < m_terminalBitmapCallocSize; bitmapIndex++ )
+        {
+            desiredBitmapPtr[bitmapIndex] = 0U;
+        }
+    }
+    // If we've ran out of lines, scroll down when copying to the other bitmap
+    else if( m_terminalCurrentLine == terminalHeightInLines )
+    {
+        uint16_t sourceByte = 0U;
+        // Shift everything up
+        while( ( sourceByte + ( (uint16_t) m_terminalBitmapBytesPerRow * m_terminalFontTablePtr->Height ) ) < m_terminalBitmapCallocSize )
+        {
+            desiredBitmapPtr[sourceByte] = currentBitmapPtr[sourceByte + ( m_terminalBitmapBytesPerRow * m_terminalFontTablePtr->Height )];
+            ++sourceByte;
+        }
+
+        // Erase the bottom of the bitmap, so we can put our own text on it
+        sourceByte = ( terminalHeightInLines - 1 ) * m_terminalFontSize * m_terminalBitmapBytesPerRow;
+        while( sourceByte < m_terminalBitmapCallocSize )
+        {
+            desiredBitmapPtr[sourceByte] = 0x00U; // Background colour
+            ++sourceByte;
+        }
+    }
+    // If we have room and don't need to scroll, directly copy one bitmap to the other
+    else
+    {
+        // This copy takes about 50 microseconds for a 128x128
+        for( uint16_t index = 0U; index < m_terminalBitmapCallocSize; index++ )
+        {
+            desiredBitmapPtr[index] = currentBitmapPtr[index];
+        }
+    }
+    
+    // --- Add the text to the bitmap ---
+    // These positions are of the glyph origins
+    uint8_t xCurrentTextPosition = 0U;
+    uint8_t yCurrentTextPosition;
+    if( m_terminalCurrentLine == terminalHeightInLines )
+    {
+        // If the display just scrolled, we need to write on the previous line else we'll be writing off the display
+        yCurrentTextPosition = ( m_terminalCurrentLine - 1 ) * m_terminalFontSize;
+    }
+    else
+        yCurrentTextPosition = m_terminalCurrentLine * m_terminalFontSize;
+    
+    uint8_t characterWidth = m_terminalFontTablePtr->Width;
+    
+    // Put the characters on the bitmap
+    while( *text != 0 )
+    {
+        // Check if we've gone too far to the right
+        if( ( xCurrentTextPosition + characterWidth ) > m_displayWidth )
+        {
+            // No text wrapping implemented for the terminal so just stop
+            break;
+        }
+        
+        // Write the character
+        m_terminalWriteChar( *text, xCurrentTextPosition, yCurrentTextPosition );
+
+        ++text;
+        xCurrentTextPosition += characterWidth + OLED_WRITE_TEXT_CHARACTER_GAP;
+    }
+
+    // Push the bitmap
+    m_terminalPushBitmap();
 
 }
 
