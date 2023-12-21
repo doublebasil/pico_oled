@@ -1,15 +1,18 @@
 /* --- STANDARD LIBRARY INCLUDES ---------------------------------------------- */
 #include "oled.hpp"
 
+#include <cstdlib> // Is this really needed? Apparently contains the "free" function?
 #include <stdio.h> // Just for debugging
 #ifdef OLED_INCLUDE_LOADING_BAR_ROUND
 #include <math.h>
 #endif
 
+
 /* --- PICO LIBRARY INCLUDES -------------------------------------------------- */
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
 #include "hardware/spi.h"
+
 
 /* --- PREPROCESSOR -----------------------------------------------------------*/
 #ifdef OLED_INCLUDE_FONT8
@@ -28,6 +31,7 @@
 #include "font24.h"
 #endif /* OLED_INCLUDE_FONT24 */
 
+
 /* --- MODULE SCOPE VARIABLES ------------------------------------------------- */
 static int8_t m_csPin;
 static int8_t m_dcPin;
@@ -35,26 +39,33 @@ static int8_t m_rstPin;
 static int8_t m_spiInstance;
 static uint8_t m_displayWidth;
 static uint8_t m_displayHeight;
-/* --- FONT RELATED MODULE SCOPE VARIABLES --- */
-#if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
-static uint8_t* m_terminalBitmapPtr1 = NULL;
-static uint8_t* m_terminalBitmapPtr2 = NULL;
+
+/* --- LOADING BAR RELATED MODULE SCOPE VARIABLES --- */
+#if defined OLED_INCLUDE_LOADING_BAR_HORIZONTAL || defined OLED_INCLUDE_LOADING_BAR_ROUND
+// Common to both loading bars
+static uint8_t* m_loadingBarBitmapPtr1 = NULL;
+static uint8_t* m_loadingBarBitmapPtr2 = NULL;
+static uint16_t m_loadingBarCallocSize;
 typedef enum
 {
-    e_terminalUninitialised,
-    e_terminalBitmap1Next,
-    e_terminalBitmap2Next,
-} t_terminalBitmapState;
-static t_terminalBitmapState m_terminalBitmapState = e_terminalUninitialised;
-static uint8_t m_terminalFontSize;
-static uint16_t m_terminalFontColour;
-static uint8_t m_terminalCurrentLine;
-static tFontTable* m_terminalFontTablePtr;
-static uint8_t m_terminalBitmapBytesPerRow;
-static uint16_t m_terminalBitmapCallocSize;
-static bool m_terminalIsLineTemp;
-#endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
-/* --- LOADING BAR RELATED MODULE SCOPE VARIABLES --- */
+    e_loadingBarStateUninitialised,
+    e_loadingBarStateHorizontal,
+    e_loadingBarStateRound,
+} t_loadingBarState;
+typedef enum
+{
+    e_loadingBarBitmap1Next,
+    e_loadingBarBitmap2Next,
+} t_loadingBarBitmapNext;
+static t_loadingBarState m_loadingBarState = e_loadingBarStateUninitialised;
+static t_loadingBarBitmapNext m_loadingBarBitmapNext;
+#endif // defined OLED_INCLUDE_LOADING_BAR_HORIZONTAL || defined OLED_INCLUDE_LOADING_BAR_ROUND
+#ifdef OLED_INCLUDE_LOADING_BAR_HORIZONTAL
+static uint8_t m_loadingBarHorizontalTopLeftX;
+static uint8_t m_loadingBarHorizontalTopLeftY;
+static uint8_t m_loadingBarHorizontalBottomRightX;
+static uint8_t m_loadingBarHorizontalBottomRightY;
+#endif // defined OLED_INCLUDE_LOADING_BAR_HORIZONTAL
 #ifdef OLED_INCLUDE_LOADING_BAR_ROUND
 static const int16_t cosLookupTable[91] = {
 	1000, 1000, 999, 999, 
@@ -82,23 +93,47 @@ static const int16_t cosLookupTable[91] = {
 	35, 17, 0};
 #endif // defined OLED_INCLUDE_LOADING_BAR_ROUND
 
+/* --- FONT RELATED MODULE SCOPE VARIABLES --- */
+#if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
+static uint8_t* m_terminalBitmapPtr1 = NULL;
+static uint8_t* m_terminalBitmapPtr2 = NULL;
+typedef enum
+{
+    e_terminalUninitialised,
+    e_terminalBitmap1Next,
+    e_terminalBitmap2Next,
+} t_terminalBitmapState;
+static t_terminalBitmapState m_terminalBitmapState = e_terminalUninitialised;
+static uint8_t m_terminalFontSize;
+static uint16_t m_terminalFontColour;
+static uint8_t m_terminalCurrentLine;
+static tFontTable* m_terminalFontTablePtr;
+static uint8_t m_terminalBitmapBytesPerRow;
+static uint16_t m_terminalBitmapCallocSize;
+static bool m_terminalIsLineTemp;
+#endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
+
+
 /* --- MODULE SCOPE FUNCTION PROTOTYPES --------------------------------------- */
 static inline void m_displayInit( void );
 static inline void m_chipSelect( void );
 static inline void m_chipDeselect( void );
 static inline void m_writeReg( uint8_t reg );
 static inline void m_writeData( uint8_t data );
+
+/* --- LOADING BAR RELATED MODULE SCOPE FUNCTIONS --- */
+#ifdef OLED_INCLUDE_LOADING_BAR_ROUND
+static inline int16_t m_intsin( int16_t angle );
+static inline int16_t m_intcos( int16_t angle );
+#endif // defined OLED_INCLUDE_LOADING_BAR_ROUND
+
 /* --- FONT RELATED MODULE SCOPE FUNCTIONS --- */
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 void m_terminalPushBitmap( void );
 static inline void m_terminalWriteChar( char character, uint8_t textOriginX, uint8_t textOriginY );
 static inline void m_terminalWrite( const char text[] );
 #endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
-/* --- LOADING BAR RELATED MODULE SCOPE FUNCTIONS --- */
-#ifdef OLED_INCLUDE_LOADING_BAR_ROUND
-static inline int16_t m_intsin( int16_t angle );
-static inline int16_t m_intcos( int16_t angle );
-#endif // defined OLED_INCLUDE_LOADING_BAR_ROUND
+
 
 /* --- PUBLIC FUNCTION IMPLEMENTATIONS ---------------------------------------- */
 
@@ -318,44 +353,79 @@ void oled_test( void ) // Needs rewriting
 #endif /* OLED_INCLUDE_TEST_FUNCTION */
 
 #ifdef OLED_INCLUDE_LOADING_BAR_HORIZONTAL
-void oled_loadingBarHorizontal( uint8_t barX1, uint8_t barY1, uint8_t barX2, 
-    uint8_t barY2, uint16_t permille, uint16_t colour, bool hasBorder )
+int oled_loadingBarInit( uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2, 
+    uint16_t colour, uint8_t borderSize )
 {
-    if( hasBorder == true )
-    {
-        oled_fill( barX1, barY1, barX1, barY2, colour );
-        oled_fill( barX1, barY1, barX2, barY1, colour );
-        oled_fill( barX1, barY2, barX2, barY2, colour );
-        oled_fill( barX2, barY1, barX2, barY2, colour );
-    }
+    // Ensure the loading bar isn't already initialised
+    if( m_loadingBarState == e_loadingBarStateUninitialised )
+        return 1;
 
-    uint8_t xMin;
-    uint8_t xMax;
-    uint8_t yMin;
-    uint8_t yMax;
-    if( barX1 < barX2 )
+    if( x1 < x2 )
     {
-        xMin = barX1;
-        xMax = barX2;
+        m_loadingBarHorizontalTopLeftX = x1;
+        m_loadingBarHorizontalBottomRightX = x2;
     }
     else
     {
-        xMin = barX2;
-        xMax = barX1;
-    }
-    if( barY1 < barY2 )
-    {
-        yMin = barY1;
-        yMax = barY2;
-    }
-    else
-    {
-        yMin = barY2;
-        yMax = barY1;
+        m_loadingBarHorizontalTopLeftX = x2;
+        m_loadingBarHorizontalBottomRightX = x1;
     }
 
-    oled_fill( xMin, yMin, ( ( ( xMax - xMin ) * permille ) / 1000U ) + xMin, yMax, colour );
+    if( y1 < y2 )
+    {
+        // It's top in normal cartesian, but on a display positive y is down. I'm using cartesian here
+        m_loadingBarHorizontalTopLeftY = y1;
+        m_loadingBarHorizontalBottomRightY = y2;
+    }
+    {
+        m_loadingBarHorizontalTopLeftY = y2;
+        m_loadingBarHorizontalBottomRightY = y1;
+    }
+
+    // 1D bitmap for the horizontal loading bar
+    m_loadingBarCallocSize = m_loadingBarHorizontalBottomRightX - m_loadingBarHorizontalTopLeftX;
+    // We love a good calloc
+    m_loadingBarBitmapPtr1 = (uint8_t*) calloc( m_loadingBarCallocSize, sizeof( uint8_t ) );
+    if( m_loadingBarBitmapPtr1 == NULL )
+    {
+        // But not when it does this
+        return 2;
+    }
+    // Calloc! Calloc! Calloc!
+    m_loadingBarBitmapPtr2 = (uint8_t*) calloc( m_loadingBarCallocSize, sizeof( uint8_t ) );
+    if( m_loadingBarBitmapPtr2 == NULL )
+    {
+        // Free the first bitmap before exiting
+        free( m_loadingBarBitmapPtr1 );
+        m_loadingBarBitmapPtr1 = NULL;
+    }
+
+    m_loadingBarBitmapNext = e_loadingBarBitmap1Next;
+
+    return 0;
 }
+
+void oled_loadingBarDisplay( uint8_t progress ) 
+{
+    // TODO
+}
+
+void oled_loadingBarDeinit()
+{
+    if( m_loadingBarBitmapPtr1 != NULL )
+    {
+        free( m_loadingBarBitmapPtr1 );
+        m_loadingBarBitmapPtr1 = NULL;
+    }
+    if( m_loadingBarBitmapPtr2 != NULL )
+    {
+        free( m_loadingBarBitmapPtr2 );
+        m_loadingBarBitmapPtr2 = NULL;
+    }
+
+    m_loadingBarState = e_loadingBarStateUninitialised;
+}
+
 #endif /* OLED_INCLUDE_LOADING_BAR_HORIZONTAL */
 
 #ifdef OLED_INCLUDE_LOADING_BAR_ROUND
@@ -735,11 +805,17 @@ void oled_terminalSetLine( uint8_t line )
 
 void oled_terminalDeinit( void ) 
 {
-    // Free the memorey and set the bitmap pointers to NULL
-    free( m_terminalBitmapPtr1 );
-    m_terminalBitmapPtr1 = NULL;
-    free( m_terminalBitmapPtr2 );
-    m_terminalBitmapPtr2 = NULL;
+    // Free the memory and set the bitmap pointers to NULL. Never free a NULL pointer
+    if( m_terminalBitmapPtr1 != NULL )
+    {
+        free( m_terminalBitmapPtr1 );
+        m_terminalBitmapPtr1 = NULL;
+    }
+    if( m_terminalBitmapPtr2 != NULL )
+    {
+        free( m_terminalBitmapPtr2 );
+        m_terminalBitmapPtr2 = NULL;
+    }
     // Change the bitmap state module scope variable to uninitialised
     m_terminalBitmapState = e_terminalUninitialised;
 }

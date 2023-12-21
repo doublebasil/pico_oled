@@ -4,12 +4,12 @@
 /* Settings for this module ------------------------------------------------ */
 #define OLED_INCLUDE_TEST_FUNCTION
 #define OLED_INCLUDE_LOADING_BAR_HORIZONTAL
-// #define OLED_INCLUDE_LOADING_BAR_ROUND
-// #define OLED_INCLUDE_FONT8                      // Uses ~760 bytes
-// #define OLED_INCLUDE_FONT12                     // Uses ~1144 bytes
-// #define OLED_INCLUDE_FONT16                     // Uses ~3044 bytes
-// #define OLED_INCLUDE_FONT20                     // Uses ~3804 bytes
-// #define OLED_INCLUDE_FONT24                     // Uses ~6844 bytes
+#define OLED_INCLUDE_LOADING_BAR_ROUND
+#define OLED_INCLUDE_FONT8                      // Uses ~760 bytes
+#define OLED_INCLUDE_FONT12                     // Uses ~1144 bytes
+#define OLED_INCLUDE_FONT16                     // Uses ~3044 bytes
+#define OLED_INCLUDE_FONT20                     // Uses ~3804 bytes
+#define OLED_INCLUDE_FONT24                     // Uses ~6844 bytes
 #define OLED_WRITE_TEXT_CHARACTER_GAP     ( 0 ) // Number of pixels between characters
 
 #include <stdint.h>
@@ -87,23 +87,44 @@ void oled_test( void );
 
 #ifdef OLED_INCLUDE_LOADING_BAR_HORIZONTAL
 /*
- * Function: oled_loadingBarHorizontal
+ * Function: oled_loadingBarInit
  * --------------------
- * Display a horizontal loading bar, specifying coordinates for the corners of
- * the bar. Progress measured in permille (out of 1000)
+ * Initialise a loading bar, calls calloc to create bitmaps
  *
- * barX1: X co-ordinate 1 of progress bar
- * barY1: Y co-ordinate 1 of progress bar
- * barX2: X co-ordinate 2 of progress bar
- * barY2: Y co-ordinate 2 of progress bar
- * permille: Progress out of 1000 (1000 would be done, 0 would be empty)
- * colour: Progress bar colour in RGB565
- * hasBorder: Set to true to draw a border around the progress bar
+ * x1, y1: coordinates of corner 1
+ * x2, y2: coordinates of corner opposite corner 1
+ * colour: Pixel colour in RGB565 format
+ * borderSize: Size of border around the loading bar in pixels, set to 0 for no border
+ * 
+ * returns: int 0 on success
+ *          1 on fail due to loading bar already being initialised
+ *          2 on fail due to failed calloc
+ */
+int oled_loadingBarInit( uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2, 
+    uint16_t colour, uint8_t borderSize );
+
+/*
+ * Function: oled_loadingBarDisplay
+ * --------------------
+ * Set the colour of a specific pixel
+ *
+ * progress: 0 = 0% complete, 255 = 100% complete
  *
  * returns: void
  */
-void oled_loadingBarHorizontal( uint8_t barX1, uint8_t barY1, uint8_t barX2, 
-    uint8_t barY2, uint16_t permille, uint16_t colour, bool hasBorder );
+void oled_loadingBarDisplay( uint8_t progress );
+
+/*
+ * Function: oled_loadingBarDeinit
+ * --------------------
+ * Frees the loading bar bitmaps, allows you to 
+ *
+ * parameters: none
+ *
+ * returns: void
+ */
+void oled_loadingBarDeinit();
+
 #endif /* OLED_INCLUDE_LOADING_BAR_HORIZONTAL */
 
 #ifdef OLED_INCLUDE_LOADING_BAR_ROUND

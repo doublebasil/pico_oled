@@ -1,5 +1,4 @@
-For each of the terminal functions, ensure the terminal is initalised
-before doing anything
+Make the horizontal loading bar use a bitmap
 
 Add round loading bar using bitmap. Need to use bitmap
 else you get nasty flashing :(
