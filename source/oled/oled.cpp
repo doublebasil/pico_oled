@@ -710,7 +710,19 @@ void oled_terminalWriteTemp( const char text[] )
     m_terminalIsLineTemp = true;
 }
 
-void oled_terminalClear( void ) {} // TODO
+void oled_terminalClear( void )
+{
+    uint8_t* desiredBitmapPtr = ( m_terminalBitmapState == e_terminalBitmap1Next ) ? m_terminalBitmapPtr1 : m_terminalBitmapPtr2;
+    // Set all pixels to off
+    for( uint16_t index = 0U; index < m_terminalBitmapCallocSize; index++ )
+        desiredBitmapPtr[index] = 0x00U;
+    // Push the (now empty) bitmap to the display
+    m_terminalPushBitmap();
+    // Set the current line back to 0
+    m_terminalCurrentLine = 0U;
+}
+
+void oled_terminalSetLine( uint8_t line ) {} // Just making work for myself at this point
 
 void oled_terminalDeinit( void ) 
 {

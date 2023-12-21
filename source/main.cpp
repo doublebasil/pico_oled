@@ -74,6 +74,14 @@ int main( void )
     oled_terminalWriteTemp("...");
     sleep_ms(500);
     oled_terminalWrite("Done!");
+    sleep_ms(500);
+    oled_terminalClear();
+    sleep_ms(500);
+    oled_terminalWrite("Hello, world!");
+    sleep_ms(500);
+    oled_terminalWrite("Hello, world!");
+    sleep_ms(500);
+    oled_terminalClear();
 
 
     // uint16_t delay = 50;

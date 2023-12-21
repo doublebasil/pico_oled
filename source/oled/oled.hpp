@@ -243,6 +243,17 @@ void oled_terminalWriteTemp( const char text[] );
 void oled_terminalClear( void );
 
 /*
+ * Function: oled_terminalSetLine
+ * --------------------
+ * Set line to be written on. All lines below will be deleted
+ *
+ * line: Terminal line to write on. Top of terminal is line 0!
+ *
+ * returns: void
+ */
+void oled_terminalSetLine( uint8_t line );
+
+/*
  * Function: oled_terminalClear
  * --------------------
  * Write a temporary line to the terminal, next time a line is written it will
