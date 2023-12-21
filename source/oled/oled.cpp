@@ -722,7 +722,13 @@ void oled_terminalClear( void )
     m_terminalCurrentLine = 0U;
 }
 
-void oled_terminalSetLine( uint8_t line ) {} // Just making work for myself at this point
+void oled_terminalSetLine( uint8_t line ) 
+{
+    uint8_t terminalMaxLine = oled_terminalGetHeightInCharacters();
+    if( ( line >= 0U ) && ( line <= terminalMaxLine ) )
+        m_terminalCurrentLine = line;
+    // Otherwise not a valid line number
+}
 
 void oled_terminalDeinit( void ) 
 {
@@ -744,7 +750,6 @@ void oled_terminalDeinit( void )
  * bitmapPtr: Pointer to the bitmap to be written to
  * fontTablePtr: Pointer to the relevant font table
  * 
- *
  * returns: void
  */
 static inline void m_terminalWriteChar( char character, uint8_t textOriginX, uint8_t textOriginY )
@@ -787,6 +792,17 @@ static inline void m_terminalWriteChar( char character, uint8_t textOriginX, uin
 
 }
 
+/*
+ * Function: m_terminalWrite
+ * --------------------
+ * Code common to oled_terminalWritea and oled_terminalWriteTemp
+ * The changing of m_terminalCurrentLine and m_terminalIsLineTemp is done by the
+ * aforementioned functions
+ *
+ * text: Text to be written
+ * 
+ * returns: void
+ */
 static inline void m_terminalWrite( const char text[] )
 {
     if( m_terminalBitmapState == e_terminalUninitialised )
@@ -813,10 +829,14 @@ static inline void m_terminalWrite( const char text[] )
         // Copy everything except the previous line
         uint16_t copyEndIndex;
         if( m_terminalCurrentLine != terminalHeightInLines )
+        {
             copyEndIndex = (uint16_t) m_terminalCurrentLine * (uint16_t) m_terminalBitmapBytesPerRow * (uint16_t) m_terminalFontSize;
+        }
         else
+        {
             copyEndIndex = (uint16_t) ( m_terminalCurrentLine - 1 ) * (uint16_t) m_terminalBitmapBytesPerRow * (uint16_t) m_terminalFontSize;
-        printf("copyEndIndex=%d\n", copyEndIndex);
+        }
+
         for( uint16_t bitmapIndex = 0U; bitmapIndex < copyEndIndex; bitmapIndex++ )
         {
             desiredBitmapPtr[bitmapIndex] = currentBitmapPtr[bitmapIndex];
@@ -853,6 +873,26 @@ static inline void m_terminalWrite( const char text[] )
         for( uint16_t index = 0U; index < m_terminalBitmapCallocSize; index++ )
         {
             desiredBitmapPtr[index] = currentBitmapPtr[index];
+        }
+        // And then erase the line we want to write on, in case the terminal set line function has been used
+        uint16_t index;
+        // Set the index starting point
+        if( m_terminalCurrentLine != terminalHeightInLines )
+        {
+            index = (uint16_t) m_terminalCurrentLine * (uint16_t) m_terminalBitmapBytesPerRow * (uint16_t) m_terminalFontSize;
+        }
+        else
+        {
+            index = (uint16_t) ( m_terminalCurrentLine - 1 ) * (uint16_t) m_terminalBitmapBytesPerRow * (uint16_t) m_terminalFontSize;
+        }
+        // Determine erase end point
+        uint16_t eraseEndIndex = index + ( m_terminalFontTablePtr->Height * m_terminalBitmapBytesPerRow);
+        // Ensure we won't be writing out of bounds
+        eraseEndIndex = ( eraseEndIndex < m_terminalBitmapCallocSize ) ? eraseEndIndex : m_terminalBitmapCallocSize; // I'm not sure this is a good line
+        while( index < eraseEndIndex )
+        {
+            desiredBitmapPtr[index] = 0x00U;
+            ++index;
         }
     }
     
@@ -902,7 +942,7 @@ static inline void m_terminalWrite( const char text[] )
  *
  * returns: void
  */
-void m_terminalPushBitmap( void ) 
+void m_terminalPushBitmap( void )
 {
     // Position within each byte in the bitmap array
     uint8_t bitPosition = 0U;

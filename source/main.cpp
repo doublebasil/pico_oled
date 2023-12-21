@@ -16,6 +16,8 @@ inline uint64_t millis()
     return micros() / 1000ULL;
 }
 
+#define S sleep_ms( 500 );
+
 int main( void )
 {
     // Initialise the debug output
@@ -56,78 +58,26 @@ int main( void )
             sleep_ms( 1000U );
     }
 
+    int height = (int) oled_terminalGetHeightInCharacters();
     char txt[20];
-    for( int i = 0; i < 9; i++ )
+
+    oled_terminalWrite("Test 1");
+    S
+    oled_terminalSetLine( 3 );
+    S
+    oled_terminalWriteTemp("Test 2");
+    S
+    oled_terminalWrite("Test 3");
+    S
+    oled_terminalSetLine( 0 );
+    S
+
+    for( int i = 0; i < height; i++ )
     {
-        uint32_t t = (uint32_t) millis();
-        sprintf(txt, "T %ld", t);
-        oled_terminalWriteTemp(txt);
-        sleep_ms(500);
-        sprintf(txt, "P %ld", t);
+        sprintf(txt, "%ld", (uint32_t) micros());
         oled_terminalWrite(txt);
-        sleep_ms(200);
+        S
     }
-    oled_terminalWriteTemp(".");
-    sleep_ms(300);
-    oled_terminalWriteTemp("..");
-    sleep_ms(300);
-    oled_terminalWriteTemp("...");
-    sleep_ms(500);
-    oled_terminalWrite("Done!");
-    sleep_ms(500);
-    oled_terminalClear();
-    sleep_ms(500);
-    oled_terminalWrite("Hello, world!");
-    sleep_ms(500);
-    oled_terminalWrite("Hello, world!");
-    sleep_ms(500);
-    oled_terminalClear();
-
-
-    // uint16_t delay = 50;
-    // oled_terminalWrite("a   ");
-    // sleep_ms( delay );
-    // oled_terminalWrite(" b  ");
-    // sleep_ms( delay );
-    // oled_terminalWrite("  c ");
-    // sleep_ms( delay );
-    // oled_terminalWriteTemp("mnop");
-    // sleep_ms( 1000 );
-    // oled_terminalWrite("abcdefghijklmnop");
-    // sleep_ms( 1000 );
-    // oled_terminalWrite("uvwx");
-    // sleep_ms( 500 );
-    // oled_terminalWrite("yz");
-    // sleep_ms( 500 );
-    // oled_terminalWrite("abcd");
-    // oled_terminalWrite("abcd");
-    
-    // // oled_terminalWrite( "B" );
-    // // sleep_ms( 500 );
-    // // oled_terminalWrite( "Hello," );
-    // // sleep_ms( 200 );
-    // // oled_terminalWrite( "world!" );
-    // // sleep_ms( 500 );
-
-    // oled_terminalDeinit();
-    // sleep_ms( 1000 );
-    // oled_clear();
-    // oled_terminalWrite( "BAD" );
-    // sleep_ms( 500 );
-    // oled_terminalInit( 8U, 0b1111100000000000 );
-
-    // char str[10] = {0};
-    // for( ;; )
-    // {
-    //     sprintf( str, "%ld", (uint32_t) micros() );
-    //     oled_terminalWrite( str );
-    //     sleep_ms( 50 );
-    // }
-
-    // oled_setPixel(0, 127, 0xFFF0);
-
-    // oled_setPixel(0, 0, 0b1111100000000000);
-    // oled_writeChar(0, 0, 'B', 24U, 0xFFFF );
 
     printf( "End\n" );
     for( ;; ) 

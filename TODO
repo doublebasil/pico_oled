@@ -1,23 +1,5 @@
-There's a bunch of places for the terminal code where the same thing gradients
-calculated. For example, the calloc length is calculated in loads of places
-Might be better to create a few more module scope variables? Or potentially
-create a module scope struct pointer which is null when the terminal is not
-initialised, and when the terminal is initialised it stores a bunch of init 
-related info
-: bytes per row
-: calloc size
-: font size
-: font colour
-: 
-Actually, mallocing a struct sounds like a pain
-
-Read through everything we already have and make sure all of the variable
-types are suitable, and that the variable names makes sense. Currently, they
-dont all make sense. Also make sure the comments are suitable
-
-It's becomming a big file, so need more clear sections, e.g.
-module scope variables, public functions, private functions, etc.
-And separate more clearly into function subsets
+For each of the terminal functions, ensure the terminal is initalised
+before doing anything
 
 Add round loading bar using bitmap. Need to use bitmap
 else you get nasty flashing :(
