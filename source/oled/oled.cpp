@@ -3,9 +3,9 @@
 
 #include <cstdlib> // Is this really needed? Apparently contains the "free" function?
 #include <stdio.h> // Just for debugging
-#ifdef OLED_INCLUDE_LOADING_BAR_ROUND
+#ifdef OLED_INCLUDE_LOADING_CIRCLE
 #include <math.h>
-#endif
+#endif // OLED_INCLUDE_LOADING_CIRCLE
 
 
 /* --- PICO LIBRARY INCLUDES -------------------------------------------------- */
@@ -41,7 +41,7 @@ static uint8_t m_displayWidth;
 static uint8_t m_displayHeight;
 
 /* --- LOADING BAR RELATED MODULE SCOPE VARIABLES --- */
-#if defined OLED_INCLUDE_LOADING_BAR_HORIZONTAL || defined OLED_INCLUDE_LOADING_BAR_ROUND
+#if defined OLED_INCLUDE_LOADING_BAR_HORIZONTAL || defined OLED_INCLUDE_LOADING_CIRCLE
 // Common to both loading bars
 static uint8_t* m_loadingBarBitmapPtr1 = NULL;
 static uint8_t* m_loadingBarBitmapPtr2 = NULL;
@@ -60,14 +60,18 @@ typedef enum
 } t_loadingBarBitmapNext;
 static t_loadingBarState m_loadingBarState = e_loadingBarStateUninitialised;
 static t_loadingBarBitmapNext m_loadingBarBitmapNext;
-#endif // defined OLED_INCLUDE_LOADING_BAR_HORIZONTAL || defined OLED_INCLUDE_LOADING_BAR_ROUND
+#endif // defined OLED_INCLUDE_LOADING_BAR_HORIZONTAL || defined OLED_INCLUDE_LOADING_CIRCLE
 #ifdef OLED_INCLUDE_LOADING_BAR_HORIZONTAL
 static uint8_t m_loadingBarHorizontalTopLeftX;
 static uint8_t m_loadingBarHorizontalTopLeftY;
 static uint8_t m_loadingBarHorizontalBottomRightX;
 static uint8_t m_loadingBarHorizontalBottomRightY;
 #endif // defined OLED_INCLUDE_LOADING_BAR_HORIZONTAL
-#ifdef OLED_INCLUDE_LOADING_BAR_ROUND
+#ifdef OLED_INCLUDE_LOADING_CIRCLE
+static uint8_t m_loadingCircleCenterX;
+static uint8_t m_loadingCircleCenterY;
+static uint8_t m_loadingCircleOuterRadius;
+static uint8_t m_loadingCircleInnerRadius;
 static const int16_t cosLookupTable[91] = {
 	1000, 1000, 999, 999, 
 	998, 996, 995, 993, 
@@ -92,7 +96,7 @@ static const int16_t cosLookupTable[91] = {
 	174, 156, 139, 122, 
 	105, 87, 70, 52, 
 	35, 17, 0};
-#endif // defined OLED_INCLUDE_LOADING_BAR_ROUND
+#endif // defined OLED_INCLUDE_LOADING_CIRCLE
 
 /* --- FONT RELATED MODULE SCOPE VARIABLES --- */
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
@@ -123,10 +127,10 @@ static inline void m_writeReg( uint8_t reg );
 static inline void m_writeData( uint8_t data );
 
 /* --- LOADING BAR RELATED MODULE SCOPE FUNCTIONS --- */
-#ifdef OLED_INCLUDE_LOADING_BAR_ROUND
+#ifdef OLED_INCLUDE_LOADING_CIRCLE
 static inline int16_t m_intsin( int16_t angle );
 static inline int16_t m_intcos( int16_t angle );
-#endif // defined OLED_INCLUDE_LOADING_BAR_ROUND
+#endif // defined OLED_INCLUDE_LOADING_CIRCLE
 
 /* --- FONT RELATED MODULE SCOPE FUNCTIONS --- */
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
@@ -494,7 +498,7 @@ void oled_loadingBarDisplay( uint8_t progress )
     m_loadingBarBitmapNext = ( m_loadingBarBitmapNext == e_loadingBarBitmap1Next ) ? e_loadingBarBitmap2Next : e_loadingBarBitmap1Next;
 }
 
-void oled_loadingBarDeinit()
+void oled_loadingBarDeinit( void )
 {
     if( m_loadingBarBitmapPtr1 != NULL )
     {
@@ -512,109 +516,175 @@ void oled_loadingBarDeinit()
 
 #endif /* OLED_INCLUDE_LOADING_BAR_HORIZONTAL */
 
-#ifdef OLED_INCLUDE_LOADING_BAR_ROUND
-void oled_loadingBarRound( uint8_t centreX, uint8_t centreY, uint8_t outerRadius, 
-    uint8_t innerRadius, uint16_t permille, uint16_t colour, bool hasBorder )
+#ifdef OLED_INCLUDE_LOADING_CIRCLE
+// void oled_loadingBarRound( uint8_t centreX, uint8_t centreY, uint8_t outerRadius, 
+//     uint8_t innerRadius, uint16_t permille, uint16_t colour, bool hasBorder )
+// {
+//     // uint8_t upperBorder[outerRadius*2];
+//     // uint8_t index = 0;
+//     // if( hasBorder == true )
+//     // {
+//     //     for( uint8_t x = centreX - outerRadius; x <= centreX + outerRadius; ++x )
+//     //     {
+//     //         // Use some cartesian sins and coses to find the upper curve. Might only need one quarter
+//     //         upperBorder[index] = sin(uint8_t) + (uint8_t) cos( (float) something );
+//     //         ++index;
+
+//     //         // might want a polynomial sin and cos actually
+//     //     }
+//     // }
+
+//     // Fill the outer circle
+//     if( permille > 250U )
+//     {
+//         for( uint8_t x = centreX; x < centreX + outerRadius; ++x )
+//         {
+//             for( uint8_t y = centreY - (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); y < centreY; ++y )
+//             {
+//                 oled_setPixel( x, y, colour );
+//             }
+//         }
+//     }
+//     else
+//     {
+//         // deltaX and deltaY used to calculate m in y=mx+c
+//         uint16_t deltaX = m_intsin( ( permille * 90 ) / 250 );
+//         uint16_t deltaY = m_intcos( ( permille * 90 ) / 250 );
+//         for( uint8_t x = centreX; x < centreX + outerRadius; ++x )
+//         {
+//             for( uint8_t y = centreY - (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); y < centreY - ( ( deltaY * ( x - centreX ) ) / deltaX ); ++y )
+//             {
+//                 oled_setPixel( x, y, colour );
+//             }
+//         }
+//     }
+    
+//     if( permille > 500U )
+//     {
+//         for( uint8_t x = centreX; x < centreX + outerRadius; ++x )
+//         {
+//             for( uint8_t y = centreY; y < centreY + (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); ++y )
+//             {
+//                 oled_setPixel( x, y, colour );
+//             }
+//         }
+//     }
+//     else
+//     {
+//         // deltaX and deltaY used to calculate m in y=mx+c
+//         uint16_t deltaX = m_intsin( ( ( permille - 250 ) * 90 ) / 250 );
+//         uint16_t deltaY = m_intcos( ( ( permille - 250 ) * 90 ) / 250 );
+//         bool hasWritten;
+//         for( uint8_t y = centreY; y < centreY + outerRadius; ++y )
+//         {
+
+//             // for( uint8_t x = centreX - (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( y - centreY ) * ( y - centreY ) ) ); x < centreX - ( ( deltaX * ( y - centreY ) ) / deltaY ); ++x )
+//             hasWritten = false;
+//             for( uint8_t x = centreX + ( ( deltaX * ( y - centreY ) ) / deltaY ); x < centreX + (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( y - centreY ) * ( y - centreY ) ) ); ++x )
+//             {
+//                 hasWritten = true;
+//                 oled_setPixel( x, y, colour );
+//                 // sleep_ms(20);
+//             }
+//             if( hasWritten == false )
+//                 break;
+//         }
+//     }
+    
+//     if( permille > 750 )
+//     {
+//         for( uint8_t x = centreX - outerRadius; x < centreX; ++x )
+//         {
+//             for( uint8_t y = centreY; y < centreY + (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); ++y )
+//             {
+//                 oled_setPixel( x, y, colour );
+//             }
+//         }
+//     }
+
+    
+//     // Fill the inner circle
+//     uint8_t yBound;
+//     if( innerRadius != 0 )
+//     {
+//         for( uint8_t x = centreX - innerRadius; x < centreX + innerRadius; ++x )
+//         {
+//             yBound = (uint8_t) sqrt( ( innerRadius * innerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) );
+//             // printf("%d\n", ( innerRadius * innerRadius ) - ( ( x - innerRadius ) * ( x - innerRadius ) ));
+//             for( uint8_t y = centreY - yBound; y < centreY + yBound; ++y )
+//             {
+//                 oled_setPixel( x, y, 0x0000 );
+//             }
+//         }
+//     }
+// }
+
+int oled_loadingCircleInit( uint8_t originX, uint8_t originY, uint8_t outerRadius, 
+    uint8_t innerRadius, uint16_t colour, uint8_t borderSize ) 
 {
-    // uint8_t upperBorder[outerRadius*2];
-    // uint8_t index = 0;
-    // if( hasBorder == true )
-    // {
-    //     for( uint8_t x = centreX - outerRadius; x <= centreX + outerRadius; ++x )
-    //     {
-    //         // Use some cartesian sins and coses to find the upper curve. Might only need one quarter
-    //         upperBorder[index] = sin(uint8_t) + (uint8_t) cos( (float) something );
-    //         ++index;
+    // Ensure the loading bar isn't already initialised
+    if( m_loadingBarState != e_loadingBarStateUninitialised )
+        return 1;
 
-    //         // might want a polynomial sin and cos actually
-    //     }
-    // }
-
-    // Fill the outer circle
-    if( permille > 250U )
-    {
-        for( uint8_t x = centreX; x < centreX + outerRadius; ++x )
-        {
-            for( uint8_t y = centreY - (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); y < centreY; ++y )
-            {
-                oled_setPixel( x, y, colour );
-            }
-        }
-    }
-    else
-    {
-        // deltaX and deltaY used to calculate m in y=mx+c
-        uint16_t deltaX = m_intsin( ( permille * 90 ) / 250 );
-        uint16_t deltaY = m_intcos( ( permille * 90 ) / 250 );
-        for( uint8_t x = centreX; x < centreX + outerRadius; ++x )
-        {
-            for( uint8_t y = centreY - (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); y < centreY - ( ( deltaY * ( x - centreX ) ) / deltaX ); ++y )
-            {
-                oled_setPixel( x, y, colour );
-            }
-        }
-    }
+    // Ensure the radius values are sensible
+    if( ( outerRadius < innerRadius ) || ( outerRadius - innerRadius < 2 ) ||
+        ( innerRadius <= 2U ) || ( outerRadius <= 4U ) )
+        return 3;
     
-    if( permille > 500U )
-    {
-        for( uint8_t x = centreX; x < centreX + outerRadius; ++x )
-        {
-            for( uint8_t y = centreY; y < centreY + (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); ++y )
-            {
-                oled_setPixel( x, y, colour );
-            }
-        }
-    }
-    else
-    {
-        // deltaX and deltaY used to calculate m in y=mx+c
-        uint16_t deltaX = m_intsin( ( ( permille - 250 ) * 90 ) / 250 );
-        uint16_t deltaY = m_intcos( ( ( permille - 250 ) * 90 ) / 250 );
-        bool hasWritten;
-        for( uint8_t y = centreY; y < centreY + outerRadius; ++y )
-        {
+    // Calculate the required calloc size
+    uint16_t bitmapWidthInPixels = ( (uint16_t) outerRadius * 2U ) - 1U;
+    uint16_t bitmapTotalNumberOfPixels = bitmapWidthInPixels * bitmapWidthInPixels;
+    m_loadingBarCallocSize = bitmapTotalNumberOfPixels / 8U;
+    // Round up if needed 
+    if( bitmapTotalNumberOfPixels % 8U != 0U )
+        ++m_loadingBarCallocSize;
 
-            // for( uint8_t x = centreX - (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( y - centreY ) * ( y - centreY ) ) ); x < centreX - ( ( deltaX * ( y - centreY ) ) / deltaY ); ++x )
-            hasWritten = false;
-            for( uint8_t x = centreX + ( ( deltaX * ( y - centreY ) ) / deltaY ); x < centreX + (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( y - centreY ) * ( y - centreY ) ) ); ++x )
-            {
-                hasWritten = true;
-                oled_setPixel( x, y, colour );
-                // sleep_ms(20);
-            }
-            if( hasWritten == false )
-                break;
-        }
-    }
-    
-    if( permille > 750 )
+    // Callocs
+    m_loadingBarBitmapPtr1 = (uint8_t*) calloc( m_loadingBarCallocSize, sizeof( uint8_t ) );
+    if( m_loadingBarBitmapPtr1 == NULL )
     {
-        for( uint8_t x = centreX - outerRadius; x < centreX; ++x )
-        {
-            for( uint8_t y = centreY; y < centreY + (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); ++y )
-            {
-                oled_setPixel( x, y, colour );
-            }
-        }
+        return 2; // Failed calloc, RIP
+    }
+    m_loadingBarBitmapPtr2 = (uint8_t*) calloc( m_loadingBarCallocSize, sizeof( uint8_t ) );
+    if( m_loadingBarBitmapPtr2 == NULL )
+    {
+        // Free the first bitmap before exiting
+        free( m_loadingBarBitmapPtr1 );
+        m_loadingBarBitmapPtr1 = NULL;
+        return 2;
     }
 
-    
-    // Fill the inner circle
-    uint8_t yBound;
-    if( innerRadius != 0 )
-    {
-        for( uint8_t x = centreX - innerRadius; x < centreX + innerRadius; ++x )
-        {
-            yBound = (uint8_t) sqrt( ( innerRadius * innerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) );
-            // printf("%d\n", ( innerRadius * innerRadius ) - ( ( x - innerRadius ) * ( x - innerRadius ) ));
-            for( uint8_t y = centreY - yBound; y < centreY + yBound; ++y )
-            {
-                oled_setPixel( x, y, 0x0000 );
-            }
-        }
-    }
+    m_loadingCircleCenterX = originX;
+    m_loadingCircleCenterY = originY;
+    m_loadingCircleInnerRadius = innerRadius;
+    m_loadingCircleOuterRadius = outerRadius;
+
+    m_loadingBarColour = colour;
+    m_loadingBarState = e_loadingBarStateRound;
+    m_loadingBarBitmapNext = e_loadingBarBitmap1Next;
+
+    return 0;
 }
-#endif /* OLED_INCLUDE_LOADING_BAR_ROUND */
+
+void oled_loadingCircleDisplay( uint8_t progress ) {} // TODO
+
+void oled_loadingCircleDeinit( void )
+{
+    if( m_loadingBarBitmapPtr1 != NULL )
+    {
+        free( m_loadingBarBitmapPtr1 );
+        m_loadingBarBitmapPtr1 = NULL;
+    }
+    if( m_loadingBarBitmapPtr2 != NULL )
+    {
+        free( m_loadingBarBitmapPtr2 );
+        m_loadingBarBitmapPtr2 = NULL;
+    }
+
+    m_loadingBarState = e_loadingBarStateUninitialised;
+}
+
+#endif /* OLED_INCLUDE_LOADING_CIRCLE */
 
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 void oled_writeChar( uint8_t x, uint8_t y, char character, uint8_t fontSize, uint16_t colour )
@@ -835,12 +905,12 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour )
     return 0; // Success
 }
 
-uint8_t oled_terminalGetWidthInCharacters()
+uint8_t oled_terminalGetWidthInCharacters( void )
 {
     return m_displayWidth / ( m_terminalFontTablePtr->Width + OLED_WRITE_TEXT_CHARACTER_GAP );
 }
 
-uint8_t oled_terminalGetHeightInCharacters()
+uint8_t oled_terminalGetHeightInCharacters( void )
 {
     return m_displayHeight / m_terminalFontSize;
 }
@@ -906,10 +976,6 @@ void oled_terminalDeinit( void )
 #endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
 
 /* --- MODULE SCOPE FUNCTION IMPLEMENTATIONS ---------------------------------- */
-
-#if defined OLED_INCLUDE_LOADING_BAR_HORIZONTAL || defined OLED_INCLUDE_LOADING_BAR_ROUND
-// NOTHING HERE YET
-#endif // defined OLED_INCLUDE_LOADING_BAR_HORIZONTAL || defined OLED_INCLUDE_LOADING_BAR_ROUND
 
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 /*
@@ -1317,7 +1383,7 @@ static inline void m_writeData( uint8_t data )
         spi_write_blocking( spi1, &data, 1 );
 }
 
-#ifdef OLED_INCLUDE_LOADING_BAR_ROUND
+#ifdef OLED_INCLUDE_LOADING_CIRCLE
 /*
  * Function: m_intsin
  * --------------------
@@ -1358,4 +1424,4 @@ static inline int16_t m_intcos( int16_t angle )
     else // quadrant = 3, ( newAngle >= 270 ) and ( newAngle < 360 )
         return cosLookupTable[360 - newAngle];
 }
-#endif /* OLED_INCLUDE_LOADING_BAR_ROUND */
+#endif /* OLED_INCLUDE_LOADING_CIRCLE */

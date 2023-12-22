@@ -4,7 +4,7 @@
 /* Settings for this module ------------------------------------------------ */
 #define OLED_INCLUDE_TEST_FUNCTION
 #define OLED_INCLUDE_LOADING_BAR_HORIZONTAL
-#define OLED_INCLUDE_LOADING_BAR_ROUND
+#define OLED_INCLUDE_LOADING_CIRCLE
 #define OLED_INCLUDE_FONT8                      // Uses ~760 bytes
 #define OLED_INCLUDE_FONT12                     // Uses ~1144 bytes
 #define OLED_INCLUDE_FONT16                     // Uses ~3044 bytes
@@ -127,26 +127,68 @@ void oled_loadingBarDeinit();
 
 #endif /* OLED_INCLUDE_LOADING_BAR_HORIZONTAL */
 
-#ifdef OLED_INCLUDE_LOADING_BAR_ROUND
+#ifdef OLED_INCLUDE_LOADING_CIRCLE
+// /*
+//  * Function: oled_loadingBarRound
+//  * --------------------
+//  * Display a horizontal loading bar, specifying coordinates for the corners of
+//  * the bar. Progress measured in permille (out of 1000)
+//  *
+//  * centreX: x coordinate of the centre of the loading bar
+//  * centreY: y coordinate of the centre of the loading bar
+//  * outerRadius: Distance in pixels from centre point to the outer edge of the loading bar
+//  * innerRadius: Distance in pixels from centre point to the inner edge of the loading bar
+//  * permille: Progress out of 1000 (1000 is done, 0 is empty)
+//  * colour: Colour of the loading bar in RGB565
+//  * hasBorder: Set to true to get a border around the loading bar
+//  *
+//  * returns: void
+//  */
+// void oled_loadingBarRound( uint8_t centreX, uint8_t centreY, uint8_t outerRadius, 
+//     uint8_t innerRadius, uint16_t permille, uint16_t colour, bool hasBorder );
+
 /*
- * Function: oled_loadingBarRound
+ * Function: oled_loadingCircleInit
  * --------------------
- * Display a horizontal loading bar, specifying coordinates for the corners of
- * the bar. Progress measured in permille (out of 1000)
+ * Initialise the loading circle, calloc some bitmaps
  *
- * centreX: x coordinate of the centre of the loading bar
- * centreY: y coordinate of the centre of the loading bar
- * outerRadius: Distance in pixels from centre point to the outer edge of the loading bar
- * innerRadius: Distance in pixels from centre point to the inner edge of the loading bar
- * permille: Progress out of 1000 (1000 is done, 0 is empty)
- * colour: Colour of the loading bar in RGB565
- * hasBorder: Set to true to get a border around the loading bar
+ * originX, originY: Coordinates for the centre of the circle
+ * outerRadius: Radius of the loading circle
+ * innerRadius: Make it a loading donut with an inner radius of this size
+ * colour: colour of the loading circle in RGB565
+ * borderSize: Put a border around the loading circle, or set to 0 for no border
+ *
+ * returns: int 0 on success
+ *          1 on fail due to loading bar already being initialised
+ *          2 on fail due to failed calloc
+ *          3 on fail due to bad parameters
+ */
+int oled_loadingCircleInit( uint8_t originX, uint8_t originY, uint8_t outerRadius, 
+    uint8_t innerRadius, uint16_t colour, uint8_t borderSize );
+
+/*
+ * Function: oled_loadingCircleDisplay
+ * --------------------
+ * Update the display with the loading circle
+ *
+ * progress: 0 to 255, 255 is finished
  *
  * returns: void
  */
-void oled_loadingBarRound( uint8_t centreX, uint8_t centreY, uint8_t outerRadius, 
-    uint8_t innerRadius, uint16_t permille, uint16_t colour, bool hasBorder );
-#endif /* OLED_INCLUDE_LOADING_BAR_ROUND */
+void oled_loadingCircleDisplay( uint8_t progress );
+
+/*
+ * Function: oled_loadingCircleDeinit
+ * --------------------
+ * Deinitialised the loading circle/donut, and free the allocated bitmap memory
+ *
+ * progress: 0 to 255 where 255 is finished
+ *
+ * returns: void
+ */
+void oled_loadingCircleDeinit( void );
+
+#endif /* OLED_INCLUDE_LOADING_CIRCLE */
 
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 #define OLED_FONT8_WIDTH                ( 5 )
