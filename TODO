@@ -1,5 +1,8 @@
 Make the horizontal loading bar use a bitmap
 
+Add the border thing to the horizontal loading bar. The border should be
+drawn in the init function and should be untouched by the display function
+
 Add round loading bar using bitmap. Need to use bitmap
 else you get nasty flashing :(
 

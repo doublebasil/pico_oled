@@ -46,6 +46,7 @@ static uint8_t m_displayHeight;
 static uint8_t* m_loadingBarBitmapPtr1 = NULL;
 static uint8_t* m_loadingBarBitmapPtr2 = NULL;
 static uint16_t m_loadingBarCallocSize;
+static uint16_t m_loadingBarColour;
 typedef enum
 {
     e_loadingBarStateUninitialised,
@@ -357,7 +358,7 @@ int oled_loadingBarInit( uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2,
     uint16_t colour, uint8_t borderSize )
 {
     // Ensure the loading bar isn't already initialised
-    if( m_loadingBarState == e_loadingBarStateUninitialised )
+    if( m_loadingBarState != e_loadingBarStateUninitialised )
         return 1;
 
     if( x1 < x2 )
@@ -382,8 +383,13 @@ int oled_loadingBarInit( uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2,
         m_loadingBarHorizontalBottomRightY = y1;
     }
 
-    // 1D bitmap for the horizontal loading bar
-    m_loadingBarCallocSize = m_loadingBarHorizontalBottomRightX - m_loadingBarHorizontalTopLeftX;
+    // 1D bitmap for the horizontal loading bar, one bit per pixel
+    uint8_t barWidthInPixels = m_loadingBarHorizontalBottomRightX - m_loadingBarHorizontalTopLeftX;
+    m_loadingBarCallocSize = barWidthInPixels / 8U;
+    // Round up if needed
+    if( ( barWidthInPixels / 8U ) != 0U )
+        ++m_loadingBarCallocSize;
+
     // We love a good calloc
     m_loadingBarBitmapPtr1 = (uint8_t*) calloc( m_loadingBarCallocSize, sizeof( uint8_t ) );
     if( m_loadingBarBitmapPtr1 == NULL )
@@ -398,16 +404,89 @@ int oled_loadingBarInit( uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2,
         // Free the first bitmap before exiting
         free( m_loadingBarBitmapPtr1 );
         m_loadingBarBitmapPtr1 = NULL;
+        return 2;
     }
 
     m_loadingBarBitmapNext = e_loadingBarBitmap1Next;
+    m_loadingBarColour = colour;
 
     return 0;
 }
 
 void oled_loadingBarDisplay( uint8_t progress ) 
 {
-    // TODO
+    uint8_t bitmapIndex = 0U;
+    uint8_t* bitmapToChange = ( m_loadingBarBitmapNext == e_loadingBarBitmap1Next ) ? m_loadingBarBitmapPtr1 : m_loadingBarBitmapPtr2;
+    uint8_t barWidthInPixels = m_loadingBarHorizontalBottomRightX - m_loadingBarHorizontalTopLeftX;
+    // Calculate the number of pixels that should be "on"
+    uint16_t remainingPixelsToFill = ( (uint16_t) barWidthInPixels * (uint16_t) progress ) / 255U;
+
+    // Fill whole bytes in the bitmap first
+    while( remainingPixelsToFill > 8U )
+    {
+        // Make sure we aren't writing out of bounds
+        if( bitmapIndex >= m_loadingBarCallocSize )
+            return;
+        // Set all the pixels within this byte to on
+        bitmapToChange[bitmapIndex] = 0b11111111U;
+        remainingPixelsToFill -= 8U;
+        ++bitmapIndex;
+    }
+    // Determine the value of the overlap byte on the loading bar, where the 'on' part of the bar ends
+    uint8_t overlapByte = 0x00U;
+    while( remainingPixelsToFill > 0U )
+    {
+        overlapByte >>= 1;
+        overlapByte += 0b10000000U;
+        remainingPixelsToFill -= 1U;
+    }
+    // Set the overlap byte (ensure we aren't writing out of bounds)
+    if( bitmapIndex > m_loadingBarCallocSize )
+        return;
+    bitmapToChange[bitmapIndex] = overlapByte;
+    ++bitmapIndex;
+    // Set the rest of the bitmap to 0
+    while( bitmapIndex < m_loadingBarCallocSize )
+    {
+        bitmapToChange[bitmapIndex] = 0x00U;
+        ++bitmapIndex;
+    }
+
+    // Now to push the bitmap
+    uint8_t* bitmapCurrent = ( m_loadingBarBitmapNext == e_loadingBarBitmap1Next ) ? m_loadingBarBitmapPtr2 : m_loadingBarBitmapPtr1;
+    uint8_t xPixelPosition = m_loadingBarHorizontalTopLeftX; // Refers to pixel coordinates on the display
+    uint8_t bitmapPixel = 0U; // Can exceed 8, refers to pixel number along the loading bar
+    bitmapIndex = 0U; // Reuse this variable
+    uint8_t bitmapBitmask;
+
+    while( xPixelPosition <= m_loadingBarHorizontalBottomRightX )
+    {
+        bitmapIndex = bitmapPixel / 8U;
+        bitmapBitmask = 0b10000000U >> ( bitmapPixel % 8U );
+
+        // Check for a difference in the bitmaps
+        if( ( ( bitmapCurrent[bitmapIndex] & bitmapBitmask ) != 0U ) && 
+            ( ( bitmapToChange[bitmapIndex] & bitmapBitmask ) == 0U ) )
+        {
+            // Turn some pixels off
+            for( uint8_t y = m_loadingBarHorizontalBottomRightY; y <= m_loadingBarHorizontalTopLeftY; y++ )
+                oled_setPixel( xPixelPosition, y, 0x0000U );
+        }
+        else if( ( ( bitmapCurrent[bitmapIndex] & bitmapBitmask ) == 0U ) && 
+            ( ( bitmapToChange[bitmapIndex] & bitmapBitmask ) != 0U ) )
+        {
+            // Turn some pixels on
+            for( uint8_t y = m_loadingBarHorizontalBottomRightY; y <= m_loadingBarHorizontalTopLeftY; y++ )
+                oled_setPixel( xPixelPosition, y, m_loadingBarColour );
+        }
+        // Otherwise leave display as is
+
+        ++bitmapPixel;
+        ++xPixelPosition;
+    }
+
+    // Change the next bitmap
+    m_loadingBarBitmapNext = ( m_loadingBarBitmapNext == e_loadingBarBitmap1Next ) ? e_loadingBarBitmap2Next : e_loadingBarBitmap1Next;
 }
 
 void oled_loadingBarDeinit()
@@ -822,6 +901,10 @@ void oled_terminalDeinit( void )
 #endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
 
 /* --- MODULE SCOPE FUNCTION IMPLEMENTATIONS ---------------------------------- */
+
+#if defined OLED_INCLUDE_LOADING_BAR_HORIZONTAL || defined OLED_INCLUDE_LOADING_BAR_ROUND
+// NOTHING HERE YET
+#endif // defined OLED_INCLUDE_LOADING_BAR_HORIZONTAL || defined OLED_INCLUDE_LOADING_BAR_ROUND
 
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 /*

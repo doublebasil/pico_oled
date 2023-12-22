@@ -39,6 +39,28 @@ int main( void )
         return 1;
     }
 
+    oled_fill(0, 0, 127, 127, 0b1111100000000000U);
+    int result = oled_loadingBarInit( 0, 127, 1, 10, 0b0000000000011111U, 0 );
+    printf("loading bar init with %d\n", result);
+    sleep_ms(500);
+    while( result != 0 ) { sleep_ms(1000); }
+    for( uint16_t progress = 0; progress < 256; progress++ )
+    {
+        printf("%d\n", progress);
+        oled_loadingBarDisplay( progress );
+        sleep_ms( 5 );
+    }
+    oled_loadingBarDeinit();
+
+    oled_loadingBarInit( 0, 127, 0, 127, 0xFFFF, 0 );
+    oled_loadingBarDisplay( 100 );
+    sleep_ms(500);
+    oled_loadingBarDisplay( 255U );
+    oled_loadingBarDeinit();
+
+    sleep_ms(500);
+    oled_clear();
+
     // oled_writeText( 10, 10, "hello", 12U, 0xFFFF, false );
     // sleep_ms( 1000ULL );
     // oled_clear();
@@ -48,7 +70,7 @@ int main( void )
     //     oled_loadingBarRound( 128U/2U, 128U/2U, 60U, 20U, p, 0b0000000000000011, true );
     //     sleep_ms( 100U );
     // }
-    // // oled_fill( 0, 0, 128, 0, 0xFFFF );
+    // oled_fill( 0, 0, 128, 0, 0xFFFF );
 
     // int result = oled_terminalInit( 16U, 0b0000011111100000U );
     // if( result != 0 )
