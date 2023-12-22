@@ -51,7 +51,7 @@ typedef enum
 {
     e_loadingBarStateUninitialised,
     e_loadingBarStateHorizontal,
-    e_loadingBarStateRound,
+    e_loadingBarStateCircle,
 } t_loadingBarState;
 typedef enum
 {
@@ -139,6 +139,10 @@ static inline void m_terminalWriteChar( char character, uint8_t textOriginX, uin
 static inline void m_terminalWrite( const char text[] );
 #endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 
+/* --- LOADING CIRCLE MODULE SCOPE FUNCTIONS --- */
+#ifdef OLED_INCLUDE_LOADING_CIRCLE
+void m_loadingCircleSetBitmap( uint8_t x, uint8_t y, bool val );
+#endif // OLED_INCLUDE_LOADING_CIRCLE
 
 /* --- PUBLIC FUNCTION IMPLEMENTATIONS ---------------------------------------- */
 
@@ -660,13 +664,99 @@ int oled_loadingCircleInit( uint8_t originX, uint8_t originY, uint8_t outerRadiu
     m_loadingCircleOuterRadius = outerRadius;
 
     m_loadingBarColour = colour;
-    m_loadingBarState = e_loadingBarStateRound;
+    m_loadingBarState = e_loadingBarStateCircle;
     m_loadingBarBitmapNext = e_loadingBarBitmap1Next;
 
     return 0;
 }
 
-void oled_loadingCircleDisplay( uint8_t progress ) {} // TODO
+void oled_loadingCircleDisplay( uint8_t progress )
+{
+    // Check the loading circle has been initialised
+    if( m_loadingBarState != e_loadingBarStateCircle )
+        return;
+
+    // Get the bitmaps
+    uint8_t* nextBitmap;
+    uint8_t* currentBitmap;
+    if( m_loadingBarBitmapNext == e_loadingBarBitmap1Next )
+    {
+        nextBitmap = m_loadingBarBitmapPtr1;
+        currentBitmap = m_loadingBarBitmapPtr2;
+    }
+    else
+    {
+        nextBitmap = m_loadingBarBitmapPtr2;
+        currentBitmap = m_loadingBarBitmapPtr1;
+    }
+
+    uint8_t progressRemaining = progress;
+    uint8_t quadrant = 0U; 
+    /* If I coded this well, you could change the quadrant start value to make it start in a different place
+     * Q3 | Q0
+     * -------
+     * Q2 | Q1 */
+    
+    while( progressRemaining != 0U )
+    {
+        if( progressRemaining > 63U )
+        {
+            // This quadrant will be completely filled
+
+            // for( uint16_t i = 0U; i < m_loadingBarCallocSize; i++ )
+            // {
+            //     nextBitmap[i] = 0b11001111U;
+            // }
+            // THIS STILL NEEDS DOING
+
+            progressRemaining -= 64U;
+        }
+        else
+        {
+            // This quadrant won't be completely filled
+
+            progressRemaining -= progressRemaining;
+        }
+
+        ++quadrant;
+        if( quadrant == 4U )
+            quadrant = 0U;
+    }
+
+    // Push the bitmap
+    uint16_t bitPosition = 0U;
+    uint8_t displayPositionX = m_loadingCircleCenterX - ( m_loadingCircleOuterRadius - 1U );
+    uint8_t displayPositionY = m_loadingCircleCenterY - ( m_loadingCircleOuterRadius - 1U );
+    const uint8_t displayLimitX = m_loadingCircleCenterX + ( m_loadingCircleOuterRadius - 1U );
+    const uint8_t bitmapWidth = ( m_loadingCircleOuterRadius * 2U ) - 1U;
+    while( bitPosition < (uint16_t) ( ( bitmapWidth * bitmapWidth ) - 1U ) )
+    {
+        if( ( ( nextBitmap[bitPosition / 8U] & ( 0b10000000 >> bitPosition % 8U ) ) == 0 ) &&
+            ( ( currentBitmap[bitPosition / 8U] & ( 0b10000000 >> bitPosition % 8U ) ) != 0 ) )
+        {
+            oled_setPixel( displayPositionX, displayPositionY, 0x0000U );
+        }
+        else if( ( ( nextBitmap[bitPosition / 8U] & ( 0b10000000 >> bitPosition % 8U ) ) != 0 ) &&
+            ( ( currentBitmap[bitPosition / 8U] & ( 0b10000000 >> bitPosition % 8U ) ) == 0 ) )
+        {
+            oled_setPixel( displayPositionX, displayPositionY, m_loadingBarColour );
+        }
+        // Otherwise leave display as is
+
+        ++displayPositionX;
+        if( displayPositionX > displayLimitX )
+        {
+            displayPositionX -= bitmapWidth;
+            ++displayPositionY;
+        }
+
+        ++bitPosition;
+    }
+
+    // Update the module scope variables
+    m_loadingBarBitmapNext = ( m_loadingBarBitmapNext == e_loadingBarBitmap1Next ) ? e_loadingBarBitmap2Next : e_loadingBarBitmap1Next;
+    
+}
 
 void oled_loadingCircleDeinit( void )
 {
@@ -1239,6 +1329,16 @@ void m_terminalPushBitmap( void )
         m_terminalBitmapState = e_terminalBitmap1Next;
 }
 #endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
+
+#ifdef OLED_INCLUDE_LOADING_CIRCLE
+
+// Add an insightful comment here
+void m_loadingCircleSetBitmap( uint8_t x, uint8_t y, bool val ) 
+{
+    // Make sure the bitmap is actually in existence?
+}
+
+#endif // OLED_INCLUDE_LOADING_CIRCLE
 
 /*
  * Function: m_displayInit
