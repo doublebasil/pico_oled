@@ -407,6 +407,7 @@ int oled_loadingBarInit( uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2,
         return 2;
     }
 
+    m_loadingBarState = e_loadingBarStateHorizontal;
     m_loadingBarBitmapNext = e_loadingBarBitmap1Next;
     m_loadingBarColour = colour;
 
@@ -415,6 +416,10 @@ int oled_loadingBarInit( uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2,
 
 void oled_loadingBarDisplay( uint8_t progress ) 
 {
+    // Ensure the loading bar has been initialised
+    if( m_loadingBarState != e_loadingBarStateHorizontal )
+        return; // Horizontal loading bar has not been initialised
+
     uint8_t bitmapIndex = 0U;
     uint8_t* bitmapToChange = ( m_loadingBarBitmapNext == e_loadingBarBitmap1Next ) ? m_loadingBarBitmapPtr1 : m_loadingBarBitmapPtr2;
     uint8_t barWidthInPixels = m_loadingBarHorizontalBottomRightX - m_loadingBarHorizontalTopLeftX;
