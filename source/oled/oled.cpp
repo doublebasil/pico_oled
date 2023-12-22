@@ -70,6 +70,7 @@ static uint8_t m_loadingBarHorizontalBottomRightY;
 #ifdef OLED_INCLUDE_LOADING_CIRCLE
 static uint8_t m_loadingCircleCenterX;
 static uint8_t m_loadingCircleCenterY;
+static uint8_t m_loadingCircleBitmapWidth;
 static uint8_t m_loadingCircleOuterRadius;
 static uint8_t m_loadingCircleInnerRadius;
 static const int16_t cosLookupTable[91] = {
@@ -134,14 +135,14 @@ static inline int16_t m_intcos( int16_t angle );
 
 /* --- FONT RELATED MODULE SCOPE FUNCTIONS --- */
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
-void m_terminalPushBitmap( void );
+static void m_terminalPushBitmap( void );
 static inline void m_terminalWriteChar( char character, uint8_t textOriginX, uint8_t textOriginY );
 static inline void m_terminalWrite( const char text[] );
 #endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 
 /* --- LOADING CIRCLE MODULE SCOPE FUNCTIONS --- */
 #ifdef OLED_INCLUDE_LOADING_CIRCLE
-void m_loadingCircleSetBitmap( uint8_t x, uint8_t y, bool val );
+static inline void m_loadingCircleSetBitmap( uint8_t* bitmapPtr, uint8_t x, uint8_t y, bool val );
 #endif // OLED_INCLUDE_LOADING_CIRCLE
 
 /* --- PUBLIC FUNCTION IMPLEMENTATIONS ---------------------------------------- */
@@ -632,7 +633,7 @@ int oled_loadingCircleInit( uint8_t originX, uint8_t originY, uint8_t outerRadiu
 
     // Ensure the radius values are sensible
     if( ( outerRadius < innerRadius ) || ( outerRadius - innerRadius < 2 ) ||
-        ( innerRadius <= 2U ) || ( outerRadius <= 4U ) )
+        ( outerRadius <= 4U ) )
         return 3;
     
     // Calculate the required calloc size
@@ -662,6 +663,7 @@ int oled_loadingCircleInit( uint8_t originX, uint8_t originY, uint8_t outerRadiu
     m_loadingCircleCenterY = originY;
     m_loadingCircleInnerRadius = innerRadius;
     m_loadingCircleOuterRadius = outerRadius;
+    m_loadingCircleBitmapWidth = ( m_loadingCircleOuterRadius * 2U ) - 1U;
 
     m_loadingBarColour = colour;
     m_loadingBarState = e_loadingBarStateCircle;
@@ -694,20 +696,44 @@ void oled_loadingCircleDisplay( uint8_t progress )
     uint8_t quadrant = 0U; 
     /* If I coded this well, you could change the quadrant start value to make it start in a different place
      * Q3 | Q0
-     * -------
+     * -------            Brain go brr
      * Q2 | Q1 */
+    uint8_t xLowerBound;
+    uint8_t xUpperBound;
+    bool yIsPositive; // Positive meaning the upper part of the display (which actually has lower y values)
     
     while( progressRemaining != 0U )
     {
         if( progressRemaining > 63U )
         {
             // This quadrant will be completely filled
-
-            // for( uint16_t i = 0U; i < m_loadingBarCallocSize; i++ )
-            // {
-            //     nextBitmap[i] = 0b11001111U;
-            // }
-            // THIS STILL NEEDS DOING
+            // These coordinates refer to the bitmap. Top left of the bitmap is 0, 0
+            if( quadrant == 0U )
+            {
+                xLowerBound = m_loadingCircleOuterRadius - 1U;
+                xUpperBound = ( m_loadingCircleOuterRadius * 2U ) - 1U;
+                yIsPositive = true;
+            }
+            else if( quadrant == 1U )
+            {
+                xLowerBound = m_loadingCircleOuterRadius - 1U;
+                xUpperBound = ( m_loadingCircleOuterRadius * 2U ) - 1U;
+                yIsPositive = false;
+            }
+            else if( quadrant == 2U )
+            {
+                xLowerBound = 0U;
+                xUpperBound = m_loadingCircleOuterRadius - 1U;
+                yIsPositive = false;
+            }
+            else // quadrant == 3U
+            {
+                xLowerBound = 0U;
+                xUpperBound = m_loadingCircleOuterRadius - 1U;
+                yIsPositive = true;
+            }
+            
+            // NOW DO A FOR LOOP AND SOME CIRCLE STUFF and use the m_loadingCircleSetBitmap thing
 
             progressRemaining -= 64U;
         }
@@ -723,13 +749,21 @@ void oled_loadingCircleDisplay( uint8_t progress )
             quadrant = 0U;
     }
 
+    // ROADWORKS !!!
+    for( uint16_t index = 0U; index < m_loadingBarCallocSize; index++ )
+    {
+        printf("[%d]=0x%x, ", index, nextBitmap[index] );
+        if( index % 5 == 0 && index != 0 )
+            printf("\n");
+    }
+    // (/)
+
     // Push the bitmap
     uint16_t bitPosition = 0U;
     uint8_t displayPositionX = m_loadingCircleCenterX - ( m_loadingCircleOuterRadius - 1U );
     uint8_t displayPositionY = m_loadingCircleCenterY - ( m_loadingCircleOuterRadius - 1U );
     const uint8_t displayLimitX = m_loadingCircleCenterX + ( m_loadingCircleOuterRadius - 1U );
-    const uint8_t bitmapWidth = ( m_loadingCircleOuterRadius * 2U ) - 1U;
-    while( bitPosition < (uint16_t) ( ( bitmapWidth * bitmapWidth ) - 1U ) )
+    while( bitPosition < ( (uint16_t) m_loadingCircleBitmapWidth * (uint16_t) m_loadingCircleBitmapWidth ) )
     {
         if( ( ( nextBitmap[bitPosition / 8U] & ( 0b10000000 >> bitPosition % 8U ) ) == 0 ) &&
             ( ( currentBitmap[bitPosition / 8U] & ( 0b10000000 >> bitPosition % 8U ) ) != 0 ) )
@@ -746,7 +780,7 @@ void oled_loadingCircleDisplay( uint8_t progress )
         ++displayPositionX;
         if( displayPositionX > displayLimitX )
         {
-            displayPositionX -= bitmapWidth;
+            displayPositionX -= m_loadingCircleBitmapWidth;
             ++displayPositionY;
         }
 
@@ -1270,7 +1304,7 @@ static inline void m_terminalWrite( const char text[] )
  *
  * returns: void
  */
-void m_terminalPushBitmap( void )
+static void m_terminalPushBitmap( void )
 {
     // Position within each byte in the bitmap array
     uint8_t bitPosition = 0U;
@@ -1333,9 +1367,19 @@ void m_terminalPushBitmap( void )
 #ifdef OLED_INCLUDE_LOADING_CIRCLE
 
 // Add an insightful comment here
-void m_loadingCircleSetBitmap( uint8_t x, uint8_t y, bool val ) 
+static inline void m_loadingCircleSetBitmap( uint8_t* bitmapPtr, uint8_t x, uint8_t y, bool val ) 
 {
-    // Make sure the bitmap is actually in existence?
+    // The function that calls this function should ensure that the bitmaps are properly initialised
+    uint16_t bitNumber = ( m_loadingCircleBitmapWidth * y ) + x;
+    uint16_t byteNumber = bitNumber / 8U;
+    // Check it's within bounds
+    if( byteNumber < m_loadingBarCallocSize )
+    {
+        if( val )
+            bitmapPtr[byteNumber] |= ( 0b10000000 >> ( bitNumber % 8U ) ); // Set a bit high
+        else
+            bitmapPtr[byteNumber] &= ~( 0b10000000 >> ( bitNumber % 8U ) ); // Set a bit low
+    }
 }
 
 #endif // OLED_INCLUDE_LOADING_CIRCLE

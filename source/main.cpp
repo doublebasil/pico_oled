@@ -39,7 +39,7 @@ int main( void )
         return 1;
     }
 
-    int result = oled_loadingCircleInit( 64U, 45U, 40U, 10U, 0b1111100000000000U, 0 );
+    int result = oled_loadingCircleInit( 4U, 4U, 5U, 0U, 0b1111100000000000U, 0 );
     if( result != 0 )
     {
         printf("Circle thing failed with code %d\n", result);
@@ -51,6 +51,8 @@ int main( void )
     }
 
     oled_loadingCircleDisplay( 100U );
+
+    oled_setPixel( 0, 0, 0xFFFFU );
 
     // sleep_ms(1000);
     // oled_loadingCircleDeinit();
