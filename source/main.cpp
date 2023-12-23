@@ -55,8 +55,14 @@ int main( void )
     oled_fill( 40U+30U, 0U, 40U+30U, 127U, 0xFFFFU );
     oled_fill( 40U-30U, 0U, 40U-30U, 127U, 0xFFFFU );
 
-    // oled_loadingCircleDisplay( 100U );
-    oled_loadingCircleDisplay( 252U );
+    oled_loadingCircleDisplay( 63U );
+    // sleep_ms( 500 );
+    // oled_loadingCircleDisplay( 63U * 2 );
+    // sleep_ms( 500 );
+    // oled_loadingCircleDisplay( 63U * 3 );
+    // sleep_ms( 500 );
+    // oled_loadingCircleDisplay( 63U * 4 );
+    // // oled_loadingCircleDisplay( 252U );
 
     oled_setPixel( 40U, 40U, 0xFFFFU );
     // oled_setPixel( 40U + 30U, 40U, 0xFFFFU );

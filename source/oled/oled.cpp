@@ -698,7 +698,8 @@ void oled_loadingCircleDisplay( uint8_t progress )
     }
 
     uint8_t progressRemaining = progress;
-    uint8_t quadrant = 0U; 
+    uint8_t quadrant = 0U;
+    // uint8_t quadrant = 1U;
     /* If I coded this well, you could change the quadrant start value to make it start in a different place
      * Q3 | Q0
      * -------            Brain go brr
@@ -709,17 +710,47 @@ void oled_loadingCircleDisplay( uint8_t progress )
     
     // NEED TO DRAW A LINE FROM CENTER TO THE CIRCUMFERENCE, BUT THE DIRECTION
     // THAT YOU DRAW IT MIGHT DEPEND ON THE STARTING QUADRANT
+    // // Draw the starting line 
+    // if( quadrant == 0U )
+    // {
+    //     for( uint8_t y = 0U; y < m_loadingCircleOuterRadius; y++ )
+    //     {
+    //         printf("y=%d, bitmapWidth=%d\n", y, m_loadingCircleBitmapWidth);
+    //         m_loadingCircleSetBitmap( nextBitmap, ( m_loadingCircleOuterRadius - 1U ), y, true );
+    //     }
+    // }
+    // else if( quadrant == 1U )
+    // {
+    //     // for( uint8_t x = ( m_loadingCircleOuterRadius - 1U ); x < m_loadingCircleOuterRadius; x++ )
+    //     // {
+    //     //     m_loadingCircleSetBitmap( nextBitmap, x, ( m_loadingCircleOuterRadius - 1U ), true );
+    //     // }
+    // }
+    // else if( quadrant == 2U )
+    // {
+    //     // for( uint8_t y = 0U; y < ( m_loadingCircleOuterRadius ; y++ )
+    //     // {
+    //     //     m_loadingCircleSetBitmap( nextBitmap, ( m_loadingCircleOuterRadius - 1U ), y, true );
+    //     // }
+    // }
+    // else // quadrant == 3U
+    // {
+    //     // for( uint8_t x = 0; x < m_loadingCircleOuterRadius; x++ )
+    //     // {
+    //     //     m_loadingCircleSetBitmap( nextBitmap, x, ( m_loadingCircleOuterRadius - 1U ), true );
+    //     // }
+    // }
 
     while( progressRemaining != 0U )
     {
         if( progressRemaining >= 63U )
         {
-            printf("progressRemaining=%d\n", progressRemaining);
             // This quadrant will be completely filled
             // These coordinates refer to the bitmap. Top left of the bitmap is 0, 0
             if( quadrant == 0U )
             {
-                xLowerBound = m_loadingCircleOuterRadius - 1U;
+                // xLowerBound = m_loadingCircleOuterRadius - 1U;
+                xLowerBound = m_loadingCircleOuterRadius - 2U;
                 xUpperBound = ( m_loadingCircleOuterRadius * 2U ) - 1U;
                 yIsPositive = true;
             }
@@ -1397,18 +1428,22 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
 
     uint8_t limit; // May be upper or lower bound for y
     uint8_t triangleWidth; // Referring to pythag triangle
+
+    printf("yIsPositive=%d, xLowerBound=%d, xUpperBound=%d\n", (uint8_t) yIsPositive, xLowerBound, xUpperBound);
+
     if( angle >= 90U ) // Then angle = 90U
     {
         if( yIsPositive )
         {
             if( xLowerBound == 0 )
-                triangleWidth = ( m_loadingCircleOuterRadius - 1U );
+                triangleWidth = m_loadingCircleOuterRadius;
+                // triangleWidth = ( m_loadingCircleOuterRadius - 1U );
             else
                 triangleWidth = 0U;
             
             for( uint8_t x = xLowerBound; x < xUpperBound; x++ )
             {
-                limit = ( m_loadingCircleOuterRadius - 1U ) - (uint8_t) ( sqrt( ( m_loadingCircleOuterRadius * m_loadingCircleOuterRadius ) - ( triangleWidth * triangleWidth ) ) );
+                limit = ( m_loadingCircleOuterRadius - 1U ) - (uint8_t) ( sqrt( ( (uint16_t) m_loadingCircleOuterRadius * (uint16_t) m_loadingCircleOuterRadius ) - ( (uint16_t) triangleWidth * (uint16_t) triangleWidth ) ) );
                 for( uint8_t y = limit; y < ( m_loadingCircleOuterRadius - 1U ); y++ )
                 {
                     m_loadingCircleSetBitmap( bitmapPtr, x, y, true );
@@ -1423,7 +1458,8 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
         else
         {
             if( xLowerBound == 0 )
-                triangleWidth = ( m_loadingCircleOuterRadius - 1U );
+                triangleWidth = m_loadingCircleOuterRadius;
+                // triangleWidth = ( m_loadingCircleOuterRadius - 1U );
             else
                 triangleWidth = 0U;
             
@@ -1481,6 +1517,10 @@ static inline void m_loadingCircleSetBitmap( uint8_t* bitmapPtr, uint8_t x, uint
             bitmapPtr[byteNumber] |= ( 0b10000000 >> ( bitNumber % 8U ) ); // Set a bit high
         else
             bitmapPtr[byteNumber] &= ~( 0b10000000 >> ( bitNumber % 8U ) ); // Set a bit low
+    }
+    else // TEMP
+    {
+        printf("Prevented writing outside of loading circle bitmap!\n");
     }
 }
 
