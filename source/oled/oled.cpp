@@ -707,6 +707,9 @@ void oled_loadingCircleDisplay( uint8_t progress )
     uint8_t xUpperBound;
     bool yIsPositive; // Positive meaning the upper part of the display (which actually has lower y values)
     
+    // NEED TO DRAW A LINE FROM CENTER TO THE CIRCUMFERENCE, BUT THE DIRECTION
+    // THAT YOU DRAW IT MIGHT DEPEND ON THE STARTING QUADRANT
+
     while( progressRemaining != 0U )
     {
         if( progressRemaining >= 63U )
@@ -1390,7 +1393,7 @@ static void m_terminalPushBitmap( void )
 static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t xLowerBound,
     uint8_t xUpperBound, bool yIsPositive, uint8_t angle )
 {
-    // YOU ALSO WANT TO DELETE QUADRANTS THAT SHOULDN'T BE FILLED
+    // YOU ALSO WANT TO DELETE QUADRANTS THAT SHOULDN'T BE FILLED!!!
 
     uint8_t limit; // May be upper or lower bound for y
     uint8_t triangleWidth; // Referring to pythag triangle
