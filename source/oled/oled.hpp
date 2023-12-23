@@ -191,11 +191,11 @@ void oled_loadingCircleDeinit( void );
 #endif /* OLED_INCLUDE_LOADING_CIRCLE */
 
 #if defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
-#define OLED_FONT8_WIDTH                ( 5 )
-#define OLED_FONT12_WIDTH               ( 7 )
-#define OLED_FONT16_WIDTH               ( 11 )
-#define OLED_FONT20_WIDTH               ( 14 )
-#define OLED_FONT24_WIDTH               ( 17 )
+#define OLED_FONT8_WIDTH                ( 5U )
+#define OLED_FONT12_WIDTH               ( 7U )
+#define OLED_FONT16_WIDTH               ( 11U )
+#define OLED_FONT20_WIDTH               ( 14U )
+#define OLED_FONT24_WIDTH               ( 17U )
 
 /*
  * Function: oled_writeChar

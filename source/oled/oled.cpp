@@ -142,6 +142,8 @@ static inline void m_terminalWrite( const char text[] );
 
 /* --- LOADING CIRCLE MODULE SCOPE FUNCTIONS --- */
 #ifdef OLED_INCLUDE_LOADING_CIRCLE
+static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t xLowerBound,
+    uint8_t xUpperBound, bool yIsPositive, uint8_t angle );
 static inline void m_loadingCircleSetBitmap( uint8_t* bitmapPtr, uint8_t x, uint8_t y, bool val );
 #endif // OLED_INCLUDE_LOADING_CIRCLE
 
@@ -704,8 +706,9 @@ void oled_loadingCircleDisplay( uint8_t progress )
     
     while( progressRemaining != 0U )
     {
-        if( progressRemaining > 63U )
+        if( progressRemaining >= 63U )
         {
+            printf("progressRemaining=%d\n", progressRemaining);
             // This quadrant will be completely filled
             // These coordinates refer to the bitmap. Top left of the bitmap is 0, 0
             if( quadrant == 0U )
@@ -732,8 +735,8 @@ void oled_loadingCircleDisplay( uint8_t progress )
                 xUpperBound = m_loadingCircleOuterRadius - 1U;
                 yIsPositive = true;
             }
-            
-            // NOW DO A FOR LOOP AND SOME CIRCLE STUFF and use the m_loadingCircleSetBitmap thing
+
+            m_loadingCircleProcessQuadrant( nextBitmap, xLowerBound, xUpperBound, yIsPositive, 90U );
 
             progressRemaining -= 64U;
         }
@@ -749,14 +752,14 @@ void oled_loadingCircleDisplay( uint8_t progress )
             quadrant = 0U;
     }
 
-    // ROADWORKS !!!
-    for( uint16_t index = 0U; index < m_loadingBarCallocSize; index++ )
-    {
-        printf("[%d]=0x%x, ", index, nextBitmap[index] );
-        if( index % 5 == 0 && index != 0 )
-            printf("\n");
-    }
-    // (/)
+    // // ROADWORKS !!!
+    // for( uint16_t index = 0U; index < m_loadingBarCallocSize; index++ )
+    // {
+    //     printf("[%d]=0x%x, ", index, nextBitmap[index] );
+    //     if( index % 5 == 0 && index != 0 )
+    //         printf("\n");
+    // }
+    // // (/)
 
     // Push the bitmap
     uint16_t bitPosition = 0U;
@@ -765,13 +768,13 @@ void oled_loadingCircleDisplay( uint8_t progress )
     const uint8_t displayLimitX = m_loadingCircleCenterX + ( m_loadingCircleOuterRadius - 1U );
     while( bitPosition < ( (uint16_t) m_loadingCircleBitmapWidth * (uint16_t) m_loadingCircleBitmapWidth ) )
     {
-        if( ( ( nextBitmap[bitPosition / 8U] & ( 0b10000000 >> bitPosition % 8U ) ) == 0 ) &&
-            ( ( currentBitmap[bitPosition / 8U] & ( 0b10000000 >> bitPosition % 8U ) ) != 0 ) )
+        if( ( ( nextBitmap[bitPosition / 8U] & ( 0b10000000 >> bitPosition % 8U ) ) == 0U ) &&
+            ( ( currentBitmap[bitPosition / 8U] & ( 0b10000000 >> bitPosition % 8U ) ) != 0U ) )
         {
             oled_setPixel( displayPositionX, displayPositionY, 0x0000U );
         }
-        else if( ( ( nextBitmap[bitPosition / 8U] & ( 0b10000000 >> bitPosition % 8U ) ) != 0 ) &&
-            ( ( currentBitmap[bitPosition / 8U] & ( 0b10000000 >> bitPosition % 8U ) ) == 0 ) )
+        else if( ( ( nextBitmap[bitPosition / 8U] & ( 0b10000000 >> bitPosition % 8U ) ) != 0U ) &&
+            ( ( currentBitmap[bitPosition / 8U] & ( 0b10000000 >> bitPosition % 8U ) ) == 0U ) )
         {
             oled_setPixel( displayPositionX, displayPositionY, m_loadingBarColour );
         }
@@ -1097,6 +1100,7 @@ void oled_terminalDeinit( void )
     // Change the bitmap state module scope variable to uninitialised
     m_terminalBitmapState = e_terminalUninitialised;
 }
+
 #endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
 
 /* --- MODULE SCOPE FUNCTION IMPLEMENTATIONS ---------------------------------- */
@@ -1362,11 +1366,94 @@ static void m_terminalPushBitmap( void )
     else
         m_terminalBitmapState = e_terminalBitmap1Next;
 }
+
 #endif // defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24
 
 #ifdef OLED_INCLUDE_LOADING_CIRCLE
 
-// Add an insightful comment here
+/*
+ * Function: m_loadingCircleProcessQuadrant
+ * --------------------
+ * This is used for drawing each quadrant on the bitmap using the m_loadingCircleSetBitmap
+ * function
+ *
+ * bitmapPtr: Pointer to the loading circle bitmap that needs to be changed
+ * x, y: Coordinates of the position within the the bitmap to be changed
+ * val: Set the bit within the bitmap to high or low
+ * angle: Angle of quadrant if it isn't completely full. Set to 90 for a full quadrant
+ *
+ * returns: void
+ */
+static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t xLowerBound,
+    uint8_t xUpperBound, bool yIsPositive, uint8_t angle )
+{
+    // YOU ALSO WANT TO DELETE QUADRANTS THAT SHOULDN'T BE FILLED
+
+    uint8_t limit; // May be upper or lower bound for y
+    uint8_t triangleWidth; // Referring to pythag triangle
+    if( angle >= 90U ) // Then angle = 90U
+    {
+        if( yIsPositive )
+        {
+            triangleWidth = 0U;
+            for( uint8_t x = xLowerBound; x < xUpperBound; x++ )
+            {
+                limit = ( m_loadingCircleOuterRadius - 1U ) - (uint8_t) ( sqrt( ( m_loadingCircleOuterRadius * m_loadingCircleOuterRadius ) - ( triangleWidth * triangleWidth ) ) );
+                for( uint8_t y = limit; y < ( m_loadingCircleOuterRadius - 1U ); y++ )
+                {
+                    m_loadingCircleSetBitmap( bitmapPtr, x, y, true );
+                }
+                ++triangleWidth;
+            }
+        }
+        else
+        {
+            if( xLowerBound == 0 )
+                triangleWidth = ( m_loadingCircleOuterRadius - 1U );
+            else
+                triangleWidth = 0U;
+            
+            for( uint8_t x = xLowerBound; x < xUpperBound; x++ )
+            {
+                limit = ( m_loadingCircleOuterRadius - 1U ) + (uint8_t) ( sqrt( ( m_loadingCircleOuterRadius * m_loadingCircleOuterRadius ) - ( triangleWidth * triangleWidth ) ) );
+                for( uint8_t y = ( m_loadingCircleOuterRadius - 1U ); y < limit; y++ )
+                {
+                    m_loadingCircleSetBitmap( bitmapPtr, x, y, true );
+                }
+                if( xLowerBound == 0 )
+                    --triangleWidth;
+                else
+                    ++triangleWidth;
+            }
+        }
+    }
+    else
+    {
+        // Need to draw a partial quadrant
+        // Also need to set some stuff to off
+        if( yIsPositive )
+        {
+
+        }
+        else
+        {
+
+        }
+    }
+}
+
+/*
+ * Function: m_loadingCircleSetBitmap
+ * --------------------
+ * Used to set values in the loading circle bitmap. The top left of the bitmap is 0,0,
+ * and this may not be 0,0 on the display.
+ *
+ * bitmapPtr: Pointer to the loading circle bitmap that needs to be changed
+ * x, y: Coordinates of the position within the the bitmap to be changed
+ * val: Set the bit within the bitmap to high or low
+ *
+ * returns: void
+ */
 static inline void m_loadingCircleSetBitmap( uint8_t* bitmapPtr, uint8_t x, uint8_t y, bool val ) 
 {
     // The function that calls this function should ensure that the bitmaps are properly initialised
