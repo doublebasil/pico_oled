@@ -676,6 +676,9 @@ int oled_loadingCircleInit( uint8_t originX, uint8_t originY, uint8_t outerRadiu
 
 void oled_loadingCircleDisplay( uint8_t progress )
 {
+    if( progress > 252U )
+        progress = 252U;
+    
     // Check the loading circle has been initialised
     if( m_loadingBarState != e_loadingBarStateCircle )
         return;
@@ -738,7 +741,7 @@ void oled_loadingCircleDisplay( uint8_t progress )
 
             m_loadingCircleProcessQuadrant( nextBitmap, xLowerBound, xUpperBound, yIsPositive, 90U );
 
-            progressRemaining -= 64U;
+            progressRemaining -= 63U;
         }
         else
         {
@@ -1395,7 +1398,11 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
     {
         if( yIsPositive )
         {
-            triangleWidth = 0U;
+            if( xLowerBound == 0 )
+                triangleWidth = ( m_loadingCircleOuterRadius - 1U );
+            else
+                triangleWidth = 0U;
+            
             for( uint8_t x = xLowerBound; x < xUpperBound; x++ )
             {
                 limit = ( m_loadingCircleOuterRadius - 1U ) - (uint8_t) ( sqrt( ( m_loadingCircleOuterRadius * m_loadingCircleOuterRadius ) - ( triangleWidth * triangleWidth ) ) );
@@ -1403,7 +1410,11 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
                 {
                     m_loadingCircleSetBitmap( bitmapPtr, x, y, true );
                 }
-                ++triangleWidth;
+                if( xLowerBound == 0 )
+                    --triangleWidth;
+                else
+                    ++triangleWidth;
+                
             }
         }
         else
@@ -1424,6 +1435,7 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
                     --triangleWidth;
                 else
                     ++triangleWidth;
+                
             }
         }
     }

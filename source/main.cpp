@@ -39,7 +39,7 @@ int main( void )
         return 1;
     }
 
-    int result = oled_loadingCircleInit( 40U, 40U, 30U, 0U, 0b0011100000000000U, 0 );
+    int result = oled_loadingCircleInit( 40U, 40U, 30U, 0U, 0b0111100000011110U, 0 );
     if( result != 0 )
     {
         printf("Circle thing failed with code %d\n", result);
@@ -50,14 +50,19 @@ int main( void )
         printf("Init successfullll\n");
     }
 
+    oled_fill( 0, 40U-30U, 127, 40U-30U, 0xFFFFU );
+    oled_fill( 0, 40U+30U, 127, 40U+30U, 0xFFFFU );
+    oled_fill( 40U+30U, 0U, 40U+30U, 127U, 0xFFFFU );
+    oled_fill( 40U-30U, 0U, 40U-30U, 127U, 0xFFFFU );
+
     // oled_loadingCircleDisplay( 100U );
     oled_loadingCircleDisplay( 255U );
 
     oled_setPixel( 40U, 40U, 0xFFFFU );
-    oled_setPixel( 40U + 30U, 40U, 0xFFFFU );
-    oled_setPixel( 40U - 30U, 40U, 0xFFFFU );
-    oled_setPixel( 40U, 40U + 30U, 0xFFFFU );
-    oled_setPixel( 40U, 40U - 30U, 0xFFFFU );
+    // oled_setPixel( 40U + 30U, 40U, 0xFFFFU );
+    // oled_setPixel( 40U - 30U, 40U, 0xFFFFU );
+    // oled_setPixel( 40U, 40U + 30U, 0xFFFFU );
+    // oled_setPixel( 40U, 40U - 30U, 0xFFFFU );
 
     // oled_setPixel( 0, 0, 0xFFFFU );
 

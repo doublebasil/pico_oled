@@ -171,7 +171,7 @@ int oled_loadingCircleInit( uint8_t originX, uint8_t originY, uint8_t outerRadiu
  * --------------------
  * Update the display with the loading circle
  *
- * progress: 0 to 255, 255 is finished
+ * progress: 0 to 252 (NOT 255), 0 is not started and 252 is finished
  *
  * returns: void
  */
