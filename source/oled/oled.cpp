@@ -750,10 +750,11 @@ void oled_loadingCircleDisplay( uint8_t progress )
             printf("Y\n");
             m_loadingCircleProcessQuadrant( nextBitmap, xLowerBound, xUpperBound, yIsPositive, 0U );
         }
-        else
+        else // Then progressRemaining <= 62
         {
             // This quadrant won't be completely filled
-
+            printf("Z\n");
+            m_loadingCircleProcessQuadrant( nextBitmap, xLowerBound, xUpperBound, yIsPositive, (uint8_t) ( ( (uint16_t) progressRemaining * 90U ) / 63U ) );
             progressRemaining = 0U;
         }
 
@@ -1389,9 +1390,12 @@ static void m_terminalPushBitmap( void )
  * function
  *
  * bitmapPtr: Pointer to the loading circle bitmap that needs to be changed
- * x, y: Coordinates of the position within the the bitmap to be changed
- * val: Set the bit within the bitmap to high or low
- * angle: Angle of quadrant if it isn't completely full. Set to 90 for a full quadrant
+ * xLowerBound: Left most value of x for the quadrant
+ * xUpperBound: Right most value of x for the quadrant
+ * yIsPositive: Is this one of the two quadrants which is higher on the display?
+ *              Note: If yIsPositive is true, then lower y value will be used, because
+ *              the positive y axis extends down the display
+ * angle: Amount of quadrant which is completed, clockwise in degrees
  *
  * returns: void
  */
@@ -1399,6 +1403,8 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
     uint8_t xUpperBound, bool yIsPositive, uint8_t angle )
 {
     // YOU ALSO WANT TO DELETE QUADRANTS THAT SHOULDN'T BE FILLED!!!
+
+    printf("angle=%d\n", angle);
 
     uint8_t limit; // May be upper or lower bound for y
     uint8_t triangleWidth; // Referring to pythag triangle
@@ -1474,10 +1480,53 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
     else
     {
         // Need to draw a partial quadrant
-        // Also need to set some stuff to off
+        int32_t lineValue;      // y in y=mx+c, using bitmap coordinates
+        int32_t circleValue;    // vertical distance between centre of circle and circumference for a given x
+        uint8_t triangleWidth;
+
         if( yIsPositive )
         {
+            if( xLowerBound == 0U ) // Quadrant 3
+            {
 
+            }
+            else // Quadrant 0
+            {
+                const int32_t cosTheta = m_intcos( (int16_t) angle );
+                if( cosTheta == 0U )
+                {
+                    // No div0 errors please
+                    return;
+                }
+
+                const int32_t m100 = -1 * ( m_intsin( angle ) * 100 ) / cosTheta; // 100 times the gradient, so that we can use integers
+                const int32_t c = ( (int32_t) m_loadingCircleOuterRadius - 1 ) - ( ( m100 * ( (int32_t) m_loadingCircleOuterRadius - 1 ) ) / 100 );
+
+                triangleWidth = 0U;
+                for( uint8_t x = xLowerBound; x < xUpperBound; x++ )
+                {
+                    lineValue = ( ( m100 * x ) / 100 ) + c;
+                    circleValue = ( (int32_t) m_loadingCircleOuterRadius - 1 ) - (int32_t) ( sqrt( ( (uint16_t) m_loadingCircleOuterRadius * (uint16_t) m_loadingCircleOuterRadius ) - ( (uint16_t) triangleWidth * (uint16_t) triangleWidth ) ) );
+
+                    printf("lineValue=%ld, circleValue=%ld\n", lineValue, circleValue);
+
+                    if( circleValue >= lineValue ) // SHOULD THIS BE A > NOT >= ?
+                        break; // Intersection
+
+                    if( ( lineValue < 0 ) || ( lineValue > ( ( (int32_t) m_loadingCircleOuterRadius * 2 ) - 2 ) ) ||
+                        ( circleValue < 0 ) || ( circleValue > ( ( (int32_t) m_loadingCircleOuterRadius * 2 ) - 2 ) ) )
+                    {
+                        continue;
+                    }
+                    
+                    for( uint8_t y = (uint8_t) circleValue; y < (uint8_t) lineValue; y++ )
+                    {
+                        m_loadingCircleSetBitmap( bitmapPtr, x, y, true );
+                    }
+                    ++triangleWidth;
+                }
+
+            }
         }
         else
         {
@@ -1500,6 +1549,9 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
  */
 static inline void m_loadingCircleSetBitmap( uint8_t* bitmapPtr, uint8_t x, uint8_t y, bool val ) 
 {
+    if( m_loadingBarState != e_loadingBarStateCircle )
+        return;
+
     // The function that calls this function should ensure that the bitmaps are properly initialised
     uint16_t bitNumber = ( m_loadingCircleBitmapWidth * y ) + x;
     uint16_t byteNumber = bitNumber / 8U;

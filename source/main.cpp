@@ -39,7 +39,7 @@ int main( void )
         return 1;
     }
 
-    int result = oled_loadingCircleInit( 60U, 60U, 20U, 0U, 0b0000011111100000, 0 );
+    int result = oled_loadingCircleInit( 60U, 60U, 20U, 0U, 0b0000000000011111, 0 );
     if( result != 0 )
     {
         printf("Circle thing failed with code %d\n", result);
@@ -53,14 +53,21 @@ int main( void )
     oled_fill( 0, 60-20, 127, 60-20, 0xFFFFU ); // y = 65
     oled_fill( 60+20, 0U, 60+20, 127U, 0xFFFFU ); // x = 55
     oled_fill( 60-20, 0U, 60-20, 127U, 0xFFFFU ); // x = 65
-    oled_loadingCircleDisplay( 252U );
-    // oled_setPixel(60, 60, 0xFFFFU);
-    sleep_ms( 500 );
-    oled_loadingCircleDisplay( 252U );
-    sleep_ms( 500 );
-    oled_loadingCircleDisplay( 0U ); // This was going to be 0
-    sleep_ms( 500 );
-    oled_loadingCircleDisplay( 252U );
+    // oled_loadingCircleDisplay( 252U );
+    // // oled_setPixel(60, 60, 0xFFFFU);
+    // sleep_ms( 500 );
+    // oled_loadingCircleDisplay( 252U );
+    // sleep_ms( 500 );
+    // oled_loadingCircleDisplay( 0U );
+    // sleep_ms( 500 );
+    // oled_loadingCircleDisplay( 252U );
+
+    for( uint8_t p = 0U; p <= 252U; p++ )
+    {
+        oled_loadingCircleDisplay( p );
+        sleep_ms(50);
+    }
+
 
     // sleep_ms( 3000U );
     // oled_loadingCircleDeinit();
