@@ -39,7 +39,7 @@ int main( void )
         return 1;
     }
 
-    int result = oled_loadingCircleInit( 40U, 40U, 30U, 0U, 0b0111100000011110U, 0 );
+    int result = oled_loadingCircleInit( 60U, 60U, 20U, 0U, 0b0000011111100000, 0 );
     if( result != 0 )
     {
         printf("Circle thing failed with code %d\n", result);
@@ -47,15 +47,56 @@ int main( void )
     }
     else
     {
-        printf("Init successfullll\n");
+        printf("Init successful\n");
     }
+    oled_fill( 0, 60+20, 127, 60+20, 0xFFFFU ); // y = 55
+    oled_fill( 0, 60-20, 127, 60-20, 0xFFFFU ); // y = 65
+    oled_fill( 60+20, 0U, 60+20, 127U, 0xFFFFU ); // x = 55
+    oled_fill( 60-20, 0U, 60-20, 127U, 0xFFFFU ); // x = 65
+    oled_loadingCircleDisplay( 252U );
+    // oled_setPixel(60, 60, 0xFFFFU);
+    sleep_ms( 500 );
+    oled_loadingCircleDisplay( 252U );
+    sleep_ms( 500 );
+    oled_loadingCircleDisplay( 0U ); // This was going to be 0
+    sleep_ms( 500 );
+    oled_loadingCircleDisplay( 252U );
 
-    oled_fill( 0, 40U-30U, 127, 40U-30U, 0xFFFFU );
-    oled_fill( 0, 40U+30U, 127, 40U+30U, 0xFFFFU );
-    oled_fill( 40U+30U, 0U, 40U+30U, 127U, 0xFFFFU );
-    oled_fill( 40U-30U, 0U, 40U-30U, 127U, 0xFFFFU );
+    // sleep_ms( 3000U );
+    // oled_loadingCircleDeinit();
+    // oled_clear();
+    // result = oled_loadingCircleInit( 60U, 60U, 5U, 0U, 0b0000011111100000, 0 );
+    // if( result != 0 )
+    // {
+    //     printf("Circle thing failed with code %d\n", result);
+    //     for(;;) {sleep_ms(1000);}
+    // }
+    // else
+    // {
+    //     printf("Init successfullll\n");
+    // }
 
-    oled_loadingCircleDisplay( 63U );
+    // oled_fill( 0, 55, 127, 55, 0xFFFFU ); // y = 55
+    // oled_fill( 0, 65, 127, 65, 0xFFFFU ); // y = 65
+    // oled_fill( 55, 0U, 55, 127U, 0xFFFFU ); // x = 55
+    // oled_fill( 65, 0U, 65, 127U, 0xFFFFU ); // x = 65
+
+    // oled_loadingCircleDisplay( 70U );
+
+    // oled_setPixel( 60, 60, 0b1111100000000000 );
+
+    // sleep_ms( 1000 );
+    // oled_loadingCircleDisplay( 0U );
+    // oled_loadingCircleDisplay( 252U );
+
+    // oled_setPixel( 60, 60, 0b1111100000000000 );
+
+
+
+
+
+
+    // oled_loadingCircleDisplay( 63U );
     // sleep_ms( 500 );
     // oled_loadingCircleDisplay( 63U * 2 );
     // sleep_ms( 500 );
@@ -64,7 +105,7 @@ int main( void )
     // oled_loadingCircleDisplay( 63U * 4 );
     // // oled_loadingCircleDisplay( 252U );
 
-    oled_setPixel( 40U, 40U, 0xFFFFU );
+    // oled_setPixel( 40U, 40U, 0xFFFFU );
     // oled_setPixel( 40U + 30U, 40U, 0xFFFFU );
     // oled_setPixel( 40U - 30U, 40U, 0xFFFFU );
     // oled_setPixel( 40U, 40U + 30U, 0xFFFFU );

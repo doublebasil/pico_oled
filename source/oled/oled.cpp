@@ -698,95 +698,69 @@ void oled_loadingCircleDisplay( uint8_t progress )
     }
 
     uint8_t progressRemaining = progress;
-    uint8_t quadrant = 0U;
-    // uint8_t quadrant = 1U;
-    /* If I coded this well, you could change the quadrant start value to make it start in a different place
+    uint8_t currentQuadrant = 0U; // This should be set by a parameter in the init function
+    /* If I coded this well, you could change the currentQuadrant start value to make it start in a different place
      * Q3 | Q0
      * -------            Brain go brr
      * Q2 | Q1 */
+    uint8_t quadrantCounter = 0U; // Need to process all 4 quadrants
     uint8_t xLowerBound;
     uint8_t xUpperBound;
     bool yIsPositive; // Positive meaning the upper part of the display (which actually has lower y values)
-    
-    // NEED TO DRAW A LINE FROM CENTER TO THE CIRCUMFERENCE, BUT THE DIRECTION
-    // THAT YOU DRAW IT MIGHT DEPEND ON THE STARTING QUADRANT
-    // // Draw the starting line 
-    // if( quadrant == 0U )
-    // {
-    //     for( uint8_t y = 0U; y < m_loadingCircleOuterRadius; y++ )
-    //     {
-    //         printf("y=%d, bitmapWidth=%d\n", y, m_loadingCircleBitmapWidth);
-    //         m_loadingCircleSetBitmap( nextBitmap, ( m_loadingCircleOuterRadius - 1U ), y, true );
-    //     }
-    // }
-    // else if( quadrant == 1U )
-    // {
-    //     // for( uint8_t x = ( m_loadingCircleOuterRadius - 1U ); x < m_loadingCircleOuterRadius; x++ )
-    //     // {
-    //     //     m_loadingCircleSetBitmap( nextBitmap, x, ( m_loadingCircleOuterRadius - 1U ), true );
-    //     // }
-    // }
-    // else if( quadrant == 2U )
-    // {
-    //     // for( uint8_t y = 0U; y < ( m_loadingCircleOuterRadius ; y++ )
-    //     // {
-    //     //     m_loadingCircleSetBitmap( nextBitmap, ( m_loadingCircleOuterRadius - 1U ), y, true );
-    //     // }
-    // }
-    // else // quadrant == 3U
-    // {
-    //     // for( uint8_t x = 0; x < m_loadingCircleOuterRadius; x++ )
-    //     // {
-    //     //     m_loadingCircleSetBitmap( nextBitmap, x, ( m_loadingCircleOuterRadius - 1U ), true );
-    //     // }
-    // }
 
-    while( progressRemaining != 0U )
+    while( quadrantCounter < 4U )
     {
+        // These coordinates refer to the bitmap. Top left of the bitmap is 0, 0
+        if( currentQuadrant == 0U )
+        {
+            xLowerBound = m_loadingCircleOuterRadius - 1U;
+            xUpperBound = ( m_loadingCircleOuterRadius * 2U ) - 1U;
+            yIsPositive = true;
+        }
+        else if( currentQuadrant == 1U )
+        {
+            xLowerBound = m_loadingCircleOuterRadius - 1U;
+            xUpperBound = ( m_loadingCircleOuterRadius * 2U ) - 1U;
+            yIsPositive = false;
+        }
+        else if( currentQuadrant == 2U )
+        {
+            xLowerBound = 0U;
+            xUpperBound = m_loadingCircleOuterRadius;
+            yIsPositive = false;
+        }
+        else // currentQuadrant == 3U
+        {
+            xLowerBound = 0U;
+            xUpperBound = m_loadingCircleOuterRadius;
+            yIsPositive = true;
+        }
+
         if( progressRemaining >= 63U )
         {
-            // This quadrant will be completely filled
-            // These coordinates refer to the bitmap. Top left of the bitmap is 0, 0
-            if( quadrant == 0U )
-            {
-                // xLowerBound = m_loadingCircleOuterRadius - 1U;
-                xLowerBound = m_loadingCircleOuterRadius - 2U;
-                xUpperBound = ( m_loadingCircleOuterRadius * 2U ) - 1U;
-                yIsPositive = true;
-            }
-            else if( quadrant == 1U )
-            {
-                xLowerBound = m_loadingCircleOuterRadius - 1U;
-                xUpperBound = ( m_loadingCircleOuterRadius * 2U ) - 1U;
-                yIsPositive = false;
-            }
-            else if( quadrant == 2U )
-            {
-                xLowerBound = 0U;
-                xUpperBound = m_loadingCircleOuterRadius - 1U;
-                yIsPositive = false;
-            }
-            else // quadrant == 3U
-            {
-                xLowerBound = 0U;
-                xUpperBound = m_loadingCircleOuterRadius - 1U;
-                yIsPositive = true;
-            }
+            // This currentQuadrant will be completely filled
 
+            printf("X\n");
             m_loadingCircleProcessQuadrant( nextBitmap, xLowerBound, xUpperBound, yIsPositive, 90U );
 
             progressRemaining -= 63U;
+        }
+        else if( progressRemaining == 0U)
+        {
+            printf("Y\n");
+            m_loadingCircleProcessQuadrant( nextBitmap, xLowerBound, xUpperBound, yIsPositive, 0U );
         }
         else
         {
             // This quadrant won't be completely filled
 
-            progressRemaining -= progressRemaining;
+            progressRemaining = 0U;
         }
 
-        ++quadrant;
-        if( quadrant == 4U )
-            quadrant = 0U;
+        ++quadrantCounter;
+        ++currentQuadrant;
+        if( currentQuadrant == 4U )
+            currentQuadrant = 0U;
     }
 
     // // ROADWORKS !!!
@@ -820,7 +794,7 @@ void oled_loadingCircleDisplay( uint8_t progress )
         ++displayPositionX;
         if( displayPositionX > displayLimitX )
         {
-            displayPositionX -= m_loadingCircleBitmapWidth;
+            displayPositionX = m_loadingCircleCenterX - ( m_loadingCircleOuterRadius - 1U );
             ++displayPositionY;
         }
 
@@ -1429,15 +1403,35 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
     uint8_t limit; // May be upper or lower bound for y
     uint8_t triangleWidth; // Referring to pythag triangle
 
-    printf("yIsPositive=%d, xLowerBound=%d, xUpperBound=%d\n", (uint8_t) yIsPositive, xLowerBound, xUpperBound);
+    // Delete everything in this quarter of the bitmap
+    if( yIsPositive )
+    {
+        for( uint8_t x = xLowerBound; x < xUpperBound; x++ )
+        {
+            for( uint8_t y = 0U; y < ( m_loadingCircleOuterRadius - 1U ); y++ )
+            {
+                m_loadingCircleSetBitmap( bitmapPtr, x, y, false );
+            }
+        }
+    }
+    else
+    {
+        for( uint8_t x = xLowerBound; x < xUpperBound; x++ )
+        {
+            for( uint8_t y = ( m_loadingCircleOuterRadius - 1U ); y < ( ( m_loadingCircleOuterRadius * 2U ) - 1U ); y++ )
+            {
+                m_loadingCircleSetBitmap( bitmapPtr, x, y, false );
+            }
+        }
+    }
 
-    if( angle >= 90U ) // Then angle = 90U
+    // Now add the circle quadrants in as needed
+    if( angle >= 90U ) // Then angle is 90U
     {
         if( yIsPositive )
         {
             if( xLowerBound == 0 )
                 triangleWidth = m_loadingCircleOuterRadius;
-                // triangleWidth = ( m_loadingCircleOuterRadius - 1U );
             else
                 triangleWidth = 0U;
             
@@ -1459,7 +1453,6 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
         {
             if( xLowerBound == 0 )
                 triangleWidth = m_loadingCircleOuterRadius;
-                // triangleWidth = ( m_loadingCircleOuterRadius - 1U );
             else
                 triangleWidth = 0U;
             
