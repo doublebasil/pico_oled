@@ -62,15 +62,15 @@ int main( void )
     // sleep_ms( 500 );
     // oled_loadingCircleDisplay( 252U );
 
-    oled_loadingCircleDisplay( 63U+63U+20U );
+    // oled_loadingCircleDisplay( 63U+63U+20U );
 
-    // for( uint8_t p = 0U; p < 63U; p++ )
-    // {
-    //     printf("p=%d\n", p);
-    //     oled_loadingCircleDisplay( p );
-    //     oled_setPixel( 60, 60, 0xFFFFU );
-    //     sleep_ms( 20 );
-    // }
+    for( uint8_t p = 0U; p <= 252U; p++ )
+    {
+        printf("p=%d\n", p);
+        oled_loadingCircleDisplay( p );
+        oled_setPixel( 60, 60, 0xFFFFU );
+        sleep_ms( 2 );
+    }
     // for( uint8_t p = 63U; p <= 63U * 2U; p++ )
     // {
     //     printf("p=%d\n", p);

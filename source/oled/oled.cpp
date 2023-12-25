@@ -1505,15 +1505,11 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
                 const int32_t gradientScaled = -1 * ( m_intsin( (int16_t) ( 90U - angle ) ) * gradientScaleFactor ) / cosTheta; // scale up the gradient, so that we can use integers
                 const int32_t c = ( (int32_t) m_loadingCircleOuterRadius - 1 ) - ( ( gradientScaled * ( (int32_t) m_loadingCircleOuterRadius - 1 ) ) / gradientScaleFactor );
 
-                // printf("m100=%ld, c=%ld\n", m100, c);
-
                 triangleWidth = 0U;
                 for( uint8_t x = xLowerBound; x < xUpperBound; x++ )
                 {
                     lineValue = ( ( gradientScaled * x ) / gradientScaleFactor ) + c;
                     circleValue = ( (int32_t) m_loadingCircleOuterRadius - 1 ) - (int32_t) ( sqrt( ( (uint16_t) m_loadingCircleOuterRadius * (uint16_t) m_loadingCircleOuterRadius ) - ( (uint16_t) triangleWidth * (uint16_t) triangleWidth ) ) );
-
-                    // printf("lineValue=%ld, circleValue=%ld\n", lineValue, circleValue);
 
                     if( circleValue >= lineValue ) // SHOULD THIS BE A > NOT >= ?
                         break; // Intersection
@@ -1537,12 +1533,40 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
         {
             if( xLowerBound == 0U ) // Quadrant 2
             {
+                // Angle for the y=mx+c line is 90-angle
+                const int32_t cosTheta = m_intcos( (int16_t) ( 90U - angle ) );
+                if( cosTheta == 0U )
+                {
+                    // No 0 division errors
+                    return;
+                }
 
+                const int32_t gradientScaled = ( m_intsin( (int16_t) ( 90U - angle ) ) * gradientScaleFactor * -1 ) / cosTheta; // scale up the gradient, so that we can use integers
+                const int32_t c = ( (int32_t) m_loadingCircleOuterRadius - 1 ) - ( ( gradientScaled * ( (int32_t) m_loadingCircleOuterRadius - 1 ) ) / gradientScaleFactor );
+
+                triangleWidth = m_loadingCircleOuterRadius;
+                for( uint8_t x = xLowerBound; x < xUpperBound; x++ )
+                {
+                    lineValue = ( ( gradientScaled * x ) / gradientScaleFactor ) + c;
+                    circleValue = ( (int32_t) m_loadingCircleOuterRadius - 1 ) + (int32_t) ( sqrt( ( (uint16_t) m_loadingCircleOuterRadius * (uint16_t) m_loadingCircleOuterRadius ) - ( (uint16_t) triangleWidth * (uint16_t) triangleWidth ) ) );
+
+                    if( ( lineValue >= circleValue ) ||  // SHOULD THIS BE A > NOT >= ?
+                        ( lineValue < 0 ) || ( lineValue > ( ( (int32_t) m_loadingCircleOuterRadius * 2 ) - 2 ) ) ||
+                        ( circleValue < 0 ) || ( circleValue > ( ( (int32_t) m_loadingCircleOuterRadius * 2 ) - 2 ) ) )
+                    {
+                        --triangleWidth;
+                        continue;
+                    }
+                    
+                    for( uint8_t y = (uint8_t) lineValue; y < (uint8_t) circleValue; y++ )
+                    {
+                        m_loadingCircleSetBitmap( bitmapPtr, x, y, true );
+                    }
+                    --triangleWidth;
+                }
             }
             else // Quadrant 1
-            {
-                printf("Q1 angle=%d\n", angle);
-                // Angle for the y=mx+c line is 90-angle
+            {   
                 const int32_t cosTheta = m_intcos( (int16_t) angle );
                 if( cosTheta == 0U )
                 {
@@ -1553,22 +1577,11 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
                 const int32_t gradientScaled = ( m_intsin( (int16_t) angle ) * gradientScaleFactor ) / cosTheta; // scale up the gradient, so that we can use integers
                 const int32_t c = ( (int32_t) m_loadingCircleOuterRadius - 1 ) - ( ( gradientScaled * ( (int32_t) m_loadingCircleOuterRadius - 1 ) ) / gradientScaleFactor );
 
-                // printf("m100=%ld, c=%ld\n", m100, c);
-
                 triangleWidth = 0U;
                 for( uint8_t x = xLowerBound; x < xUpperBound; x++ )
                 {
                     lineValue = ( ( gradientScaled * x ) / gradientScaleFactor ) + c;
                     circleValue = ( (int32_t) m_loadingCircleOuterRadius - 1 ) + (int32_t) ( sqrt( ( (uint16_t) m_loadingCircleOuterRadius * (uint16_t) m_loadingCircleOuterRadius ) - ( (uint16_t) triangleWidth * (uint16_t) triangleWidth ) ) );
-
-                    // printf("lineValue=%ld, circleValue=%ld\n", lineValue, circleValue);
-
-                    // if( ( lineValue < 0 ) || ( lineValue > ( ( (int32_t) m_loadingCircleOuterRadius * 2 ) - 2 ) ) ||
-                    //     ( circleValue < 0 ) || ( circleValue > ( ( (int32_t) m_loadingCircleOuterRadius * 2 ) - 2 ) ) )
-                    // {
-                    //     ++triangleWidth;
-                    //     continue;
-                    // }
 
                     if( circleValue < 0 )
                         circleValue = 0;
@@ -1581,8 +1594,6 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
                         lineValue = 0xFF;
 
                     limit = ( lineValue < circleValue ) ? (uint8_t) lineValue : (uint8_t) circleValue;
-
-                    // printf("lineValue=%ld, circleValue=%ld, limit=%d\n", lineValue, circleValue, limit);
                     
                     for( uint8_t y = ( m_loadingCircleOuterRadius - 1U ); y < (uint8_t) limit; y++ )
                     {

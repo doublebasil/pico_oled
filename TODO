@@ -3,6 +3,11 @@ else you get nasty flashing :(
 
 Add the border thing to the horizontal loading bar. The border should be
 drawn in the init function and should be untouched by the display function
+Add border to loading circle? Or just don't
+
+Make sure all the bitmap setting functions don't set values outside of the 
+calloc boundary. Also make sure we aren't using any negative indexes for the
+bitmap pointers
 
 Neaten the oled_test function, make the gradients use the display dimensions
 in the calculations
