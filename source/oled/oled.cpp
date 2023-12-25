@@ -740,20 +740,20 @@ void oled_loadingCircleDisplay( uint8_t progress )
         {
             // This currentQuadrant will be completely filled
 
-            // printf("X\n");
             m_loadingCircleProcessQuadrant( nextBitmap, xLowerBound, xUpperBound, yIsPositive, 90U );
 
             progressRemaining -= 63U;
         }
         else if( progressRemaining == 0U)
         {
-            // printf("Y\n");
+            // This quarter of the bitmap will be empty
+
             m_loadingCircleProcessQuadrant( nextBitmap, xLowerBound, xUpperBound, yIsPositive, 0U );
         }
         else // Then progressRemaining <= 62
         {
             // This quadrant won't be completely filled
-            // printf("Z\n");
+
             m_loadingCircleProcessQuadrant( nextBitmap, xLowerBound, xUpperBound, yIsPositive, (uint8_t) ( ( (uint16_t) progressRemaining * 90U ) / 63U ) );
             progressRemaining = 0U;
         }
@@ -1402,12 +1402,10 @@ static void m_terminalPushBitmap( void )
 static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t xLowerBound,
     uint8_t xUpperBound, bool yIsPositive, uint8_t angle )
 {
-    // YOU ALSO WANT TO DELETE QUADRANTS THAT SHOULDN'T BE FILLED!!!
-
-    // printf("angle=%d\n", angle);
-
     uint8_t limit; // May be upper or lower bound for y
     uint8_t triangleWidth; // Referring to pythag triangle
+
+    printf("angle=%d\n", angle );
 
     // Delete everything in this quarter of the bitmap
     if( yIsPositive )
@@ -1490,13 +1488,46 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
         {
             if( xLowerBound == 0U ) // Quadrant 3
             {
+                const int32_t cosTheta = m_intcos( (int16_t) angle );
+                if( cosTheta == 0U )
+                {
+                    // No 0 division errors
+                    return;
+                }
 
+                const int32_t gradientScaled = ( m_intsin( (int16_t) angle ) * gradientScaleFactor ) / cosTheta; // scale up the gradient, so that we can use integers
+                const int32_t c = ( (int32_t) m_loadingCircleOuterRadius - 1 ) - ( ( gradientScaled * ( (int32_t) m_loadingCircleOuterRadius - 1 ) ) / gradientScaleFactor );
+
+                triangleWidth = m_loadingCircleOuterRadius;
+                for( uint8_t x = xLowerBound; x < xUpperBound; x++ )
+                {
+                    lineValue = ( ( gradientScaled * x ) / gradientScaleFactor ) + c;
+                    circleValue = ( (int32_t) m_loadingCircleOuterRadius - 1 ) - (int32_t) ( sqrt( ( (uint16_t) m_loadingCircleOuterRadius * (uint16_t) m_loadingCircleOuterRadius ) - ( (uint16_t) triangleWidth * (uint16_t) triangleWidth ) ) );
+
+                    if( circleValue < 0 )
+                        circleValue = 0;
+                    else if( circleValue > 0xFF )
+                        circleValue = 0xFF;
+                    
+                    if( lineValue < 0 )
+                        lineValue = 0;
+                    else if( lineValue > 0xFF )
+                        lineValue = 0xFF;
+
+                    limit = ( lineValue > circleValue ) ? (uint8_t) lineValue : (uint8_t) circleValue;
+
+                    for( uint8_t y = limit; y < (m_loadingCircleOuterRadius - 1U); y++ )
+                    {
+                        m_loadingCircleSetBitmap( bitmapPtr, x, y, true );
+                    }
+                    --triangleWidth;
+                }
             }
             else // Quadrant 0
             {
                 // Angle for the y=mx+c line is 90-angle
                 const int32_t cosTheta = m_intcos( (int16_t) ( 90U - angle ) );
-                if( cosTheta == 0U )
+                if( cosTheta == 0 )
                 {
                     // No div0 errors please
                     return;
@@ -1535,7 +1566,7 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
             {
                 // Angle for the y=mx+c line is 90-angle
                 const int32_t cosTheta = m_intcos( (int16_t) ( 90U - angle ) );
-                if( cosTheta == 0U )
+                if( cosTheta == 0 )
                 {
                     // No 0 division errors
                     return;
@@ -1568,7 +1599,7 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
             else // Quadrant 1
             {   
                 const int32_t cosTheta = m_intcos( (int16_t) angle );
-                if( cosTheta == 0U )
+                if( cosTheta == 0 )
                 {
                     // No 0 division errors
                     return;

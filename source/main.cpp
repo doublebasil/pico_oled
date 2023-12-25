@@ -16,8 +16,6 @@ inline uint64_t millis()
     return micros() / 1000ULL;
 }
 
-#define S sleep_ms( 500 );
-
 int main( void )
 {
     // Initialise the debug output
@@ -62,15 +60,57 @@ int main( void )
     // sleep_ms( 500 );
     // oled_loadingCircleDisplay( 252U );
 
-    // oled_loadingCircleDisplay( 63U+63U+20U );
+    // oled_loadingCircleDisplay( ( 63U * 3U ) + 20U );
 
-    for( uint8_t p = 0U; p <= 252U; p++ )
+    // bool state = true;
+    // uint8_t p = 1U;
+    // while( p != 0U )
+    // {
+    //     // printf("p=%d\n", p);
+    //     oled_loadingCircleDisplay( p );
+    //     // oled_setPixel( 60, 60, 0xFFFFU );
+    //     if( state )
+    //     {
+    //         ++p;
+    //         if( p == 252 )
+    //             state = false;
+    //     }
+    //     else
+    //     {
+    //         --p;
+    //     }
+    //     sleep_ms( 20 );
+    // }
+
+    typedef enum
     {
-        printf("p=%d\n", p);
+        increasing,
+        decreasing,
+    } t_direction;
+
+    t_direction dir = increasing;
+    uint8_t diff = 5;
+    uint8_t p = (63U*3) - diff;
+    while( true )
+    {
         oled_loadingCircleDisplay( p );
-        oled_setPixel( 60, 60, 0xFFFFU );
-        sleep_ms( 2 );
+        printf("p=%d\n", p);
+        sleep_ms( 500 );
+
+        if( dir == increasing )
+        {
+            ++p;
+            if( p == ( (63U*3) + diff ) )
+                dir = decreasing;
+        }
+        else
+        {
+            --p;
+            if( p == ( (63U*3) - diff ) )
+                dir = increasing;
+        }
     }
+
     // for( uint8_t p = 63U; p <= 63U * 2U; p++ )
     // {
     //     printf("p=%d\n", p);
