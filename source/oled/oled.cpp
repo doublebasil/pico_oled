@@ -1405,8 +1405,6 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
     uint8_t limit; // May be upper or lower bound for y
     uint8_t triangleWidth; // Referring to pythag triangle
 
-    printf("angle=%d\n", angle );
-
     // Delete everything in this quarter of the bitmap
     if( yIsPositive )
     {
@@ -1488,6 +1486,12 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
         {
             if( xLowerBound == 0U ) // Quadrant 3
             {
+                // To make the transition between Q2 and Q3 smoother
+                if( angle < 4U )
+                {
+                    angle += 2;
+                }
+
                 const int32_t cosTheta = m_intcos( (int16_t) angle );
                 if( cosTheta == 0U )
                 {
@@ -1564,6 +1568,12 @@ static inline void m_loadingCircleProcessQuadrant( uint8_t* bitmapPtr, uint8_t x
         {
             if( xLowerBound == 0U ) // Quadrant 2
             {
+                // To make the transition between Q2 and Q3 smoother
+                if( angle > ( 90U - 4U ) )
+                {
+                    angle -= 2U;
+                }
+
                 // Angle for the y=mx+c line is 90-angle
                 const int32_t cosTheta = m_intcos( (int16_t) ( 90U - angle ) );
                 if( cosTheta == 0 )
