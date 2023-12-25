@@ -37,7 +37,7 @@ int main( void )
         return 1;
     }
 
-    int result = oled_loadingCircleInit( 60U, 60U, 20U, 0U, 0b0000000000011111, 0 );
+    int result = oled_loadingCircleInit( 64U, 64U, 60U, 0U, 0b0000000000011111, 0 );
     if( result != 0 )
     {
         printf("Circle thing failed with code %d\n", result);
@@ -47,10 +47,10 @@ int main( void )
     {
         printf("Init successful\n");
     }
-    oled_fill( 0, 60+20, 127, 60+20, 0xFFFFU ); // y = 55
-    oled_fill( 0, 60-20, 127, 60-20, 0xFFFFU ); // y = 65
-    oled_fill( 60+20, 0U, 60+20, 127U, 0xFFFFU ); // x = 55
-    oled_fill( 60-20, 0U, 60-20, 127U, 0xFFFFU ); // x = 65
+    // oled_fill( 0, 60+20, 127, 60+20, 0xFFFFU ); // y = 55
+    // oled_fill( 0, 60-20, 127, 60-20, 0xFFFFU ); // y = 65
+    // oled_fill( 60+20, 0U, 60+20, 127U, 0xFFFFU ); // x = 55
+    // oled_fill( 60-20, 0U, 60-20, 127U, 0xFFFFU ); // x = 65
     // oled_loadingCircleDisplay( 252U );
     // // oled_setPixel(60, 60, 0xFFFFU);
     // sleep_ms( 500 );
@@ -72,7 +72,7 @@ int main( void )
         if( state )
         {
             ++p;
-            if( p == 252 )
+            if( p == 252U )
             {
                 state = false;
             }
@@ -86,7 +86,7 @@ int main( void )
         if( p == 252U )
             sleep_ms( 500U );
         else
-            sleep_ms( 20 );
+            sleep_ms( 10U );
     }
 
     // typedef enum
