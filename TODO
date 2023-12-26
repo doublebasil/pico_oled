@@ -14,9 +14,6 @@ in the calculations
 
 Add QR generation
 
-There are some methods that'd be more suitable than setPixel in the 
-manufacturers code, which would be more efficient
-
 Add image support
 
 Add extra loading bar functions, so we'll have
