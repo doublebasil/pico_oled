@@ -764,14 +764,24 @@ void oled_loadingCircleDisplay( uint8_t progress )
             currentQuadrant = 0U;
     }
 
-    // // ROADWORKS !!!
-    // for( uint16_t index = 0U; index < m_loadingBarCallocSize; index++ )
-    // {
-    //     printf("[%d]=0x%x, ", index, nextBitmap[index] );
-    //     if( index % 5 == 0 && index != 0 )
-    //         printf("\n");
-    // }
-    // // (/)
+    // Cut out the middle of the loading donut
+    uint8_t triangleWidth = ( m_loadingCircleInnerRadius - 1U );
+    uint8_t yLimit;
+    if( m_loadingCircleInnerRadius > 0U )
+    {
+        for( uint8_t x = ( m_loadingCircleOuterRadius - 1 ) - ( m_loadingCircleInnerRadius - 1U ); x < ( m_loadingCircleOuterRadius - 1 ) + ( m_loadingCircleInnerRadius ); x++ )
+        {
+            yLimit = (uint8_t) sqrt( ( (uint16_t) m_loadingCircleInnerRadius * (uint16_t) m_loadingCircleInnerRadius ) - ( (uint16_t) triangleWidth * (uint16_t) triangleWidth ) );
+            for( uint8_t y = ( m_loadingCircleOuterRadius - 1 ) - yLimit; y < ( m_loadingCircleOuterRadius - 1 ) + yLimit; y++ )
+            {
+                m_loadingCircleSetBitmap( nextBitmap, x, y, false );
+            }
+            if( x < ( m_loadingCircleOuterRadius - 1 ) )
+                --triangleWidth;
+            else
+                ++triangleWidth;
+        }
+    }
 
     // Push the bitmap
     uint16_t bitPosition = 0U;

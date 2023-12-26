@@ -1,5 +1,10 @@
-Add round loading bar using bitmap. Need to use bitmap
-else you get nasty flashing :(
+Cut out the middle of the loading donut
+
+Move the loading circle bitmap pushing code out into it's own module
+scope function
+
+Add a loading circle colour changing function, which using the loading circle
+bitmap pushing function?
 
 Add the border thing to the horizontal loading bar. The border should be
 drawn in the init function and should be untouched by the display function
@@ -9,12 +14,12 @@ Make sure all the bitmap setting functions don't set values outside of the
 calloc boundary. Also make sure we aren't using any negative indexes for the
 bitmap pointers
 
+Add image support
+
 Neaten the oled_test function, make the gradients use the display dimensions
 in the calculations
 
 Add QR generation
-
-Add image support
 
 Add extra loading bar functions, so we'll have
 oled_roundLoadingBarInit
