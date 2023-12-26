@@ -3,6 +3,8 @@ add_executable(${PROJECT_NAME}
     oled/oled.cpp
     )
 
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/no-OS-FatFS-SD-SPI-Rpi-Pico/FatFs_SPI build)
+
 # Adding a directory here means anything within this project can include it
 # Might be the wrong way to do it but I couldn't figure out the right way
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -14,6 +16,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME}
     pico_stdlib
     hardware_spi
+
+    FatFs_SPI
     )
 
 # Enable USB and UART for serial output

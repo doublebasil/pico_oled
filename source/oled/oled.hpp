@@ -11,8 +11,14 @@
 #define OLED_INCLUDE_FONT20                     // Uses ~3804 bytes
 #define OLED_INCLUDE_FONT24                     // Uses ~6844 bytes
 #define OLED_WRITE_TEXT_CHARACTER_GAP     ( 0 ) // Number of pixels between characters
+#define OLED_INCLUDE_SD_IMAGES
 
 #include <stdint.h>
+
+#ifdef OLED_INCLUDE_SD_IMAGES
+#include "sd_card.h"
+#include "ff.h"
+#endif
 
 /*
  * Function: oled_init
@@ -329,5 +335,28 @@ void oled_terminalSetLine( uint8_t line );
 void oled_terminalDeinit( void );
 
 #endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
+
+#ifdef OLED_INCLUDE_SD_IMAGES
+
+/*
+ * Function: oled_sdWriteImage
+ * --------------------
+ * Write an image to the screen has been encoded into a txt file. This is probably
+ * very inefficient, but it does what it needs to do for me, for now. The txt files
+ * are created using a .py file. You can specify where the image is drawn on the 
+ * screen by using the xOrigin and yOrigin.
+ * IMPORTANT: When this function is called, sd_init_driver() must have already been
+ * called (and returned 0), but the sd card should be unmounted.
+ *
+ * filename: Name of encoded txt file, e.g. "image1.txt"
+ *
+ * returns: int 0 on sucess
+ *              1 on fail due to failed SD card mounting
+ *              2 on fail because the specified file couldn't be opened
+ *              3 on fail because the file couldn't be closed
+ */
+int oled_sdWriteImage( const char filename[], uint8_t originX, uint8_t originY );
+
+#endif
 
 #endif /* OLED_HPP */

@@ -15,7 +15,7 @@ execute_process(COMMAND
     )
 
 set(PROJECT_NAME pico_oled)
-# set(PICO_BOARD pico_w)
+set(PICO_BOARD pico_w)
 
 include(submodules/pico-sdk/external/pico_sdk_import.cmake)
 
@@ -23,7 +23,7 @@ project(${PROJECT_NAME} C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17) # CXX is c++
 
-add_compile_options(-Wall -Werror)
+add_compile_options(-Wall) # Cannot use Werror due to FatFs_SPI library warnings
 
 pico_sdk_init()
 

@@ -31,6 +31,10 @@
 #include "font24.h"
 #endif /* OLED_INCLUDE_FONT24 */
 
+#ifdef OLED_INCLUDE_SD_IMAGES
+// Buffer size must be even
+#define OLED_SD_BUFFER_SIZE     ( 100U )
+#endif // OLED_INCLUDE_SD_IMAGES
 
 /* --- MODULE SCOPE VARIABLES ------------------------------------------------- */
 static int8_t m_csPin;
@@ -524,107 +528,6 @@ void oled_loadingBarDeinit( void )
 #endif /* OLED_INCLUDE_LOADING_BAR_HORIZONTAL */
 
 #ifdef OLED_INCLUDE_LOADING_CIRCLE
-// void oled_loadingBarRound( uint8_t centreX, uint8_t centreY, uint8_t outerRadius, 
-//     uint8_t innerRadius, uint16_t permille, uint16_t colour, bool hasBorder )
-// {
-//     // uint8_t upperBorder[outerRadius*2];
-//     // uint8_t index = 0;
-//     // if( hasBorder == true )
-//     // {
-//     //     for( uint8_t x = centreX - outerRadius; x <= centreX + outerRadius; ++x )
-//     //     {
-//     //         // Use some cartesian sins and coses to find the upper curve. Might only need one quarter
-//     //         upperBorder[index] = sin(uint8_t) + (uint8_t) cos( (float) something );
-//     //         ++index;
-
-//     //         // might want a polynomial sin and cos actually
-//     //     }
-//     // }
-
-//     // Fill the outer circle
-//     if( permille > 250U )
-//     {
-//         for( uint8_t x = centreX; x < centreX + outerRadius; ++x )
-//         {
-//             for( uint8_t y = centreY - (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); y < centreY; ++y )
-//             {
-//                 oled_setPixel( x, y, colour );
-//             }
-//         }
-//     }
-//     else
-//     {
-//         // deltaX and deltaY used to calculate m in y=mx+c
-//         uint16_t deltaX = m_intsin( ( permille * 90 ) / 250 );
-//         uint16_t deltaY = m_intcos( ( permille * 90 ) / 250 );
-//         for( uint8_t x = centreX; x < centreX + outerRadius; ++x )
-//         {
-//             for( uint8_t y = centreY - (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); y < centreY - ( ( deltaY * ( x - centreX ) ) / deltaX ); ++y )
-//             {
-//                 oled_setPixel( x, y, colour );
-//             }
-//         }
-//     }
-    
-//     if( permille > 500U )
-//     {
-//         for( uint8_t x = centreX; x < centreX + outerRadius; ++x )
-//         {
-//             for( uint8_t y = centreY; y < centreY + (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); ++y )
-//             {
-//                 oled_setPixel( x, y, colour );
-//             }
-//         }
-//     }
-//     else
-//     {
-//         // deltaX and deltaY used to calculate m in y=mx+c
-//         uint16_t deltaX = m_intsin( ( ( permille - 250 ) * 90 ) / 250 );
-//         uint16_t deltaY = m_intcos( ( ( permille - 250 ) * 90 ) / 250 );
-//         bool hasWritten;
-//         for( uint8_t y = centreY; y < centreY + outerRadius; ++y )
-//         {
-
-//             // for( uint8_t x = centreX - (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( y - centreY ) * ( y - centreY ) ) ); x < centreX - ( ( deltaX * ( y - centreY ) ) / deltaY ); ++x )
-//             hasWritten = false;
-//             for( uint8_t x = centreX + ( ( deltaX * ( y - centreY ) ) / deltaY ); x < centreX + (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( y - centreY ) * ( y - centreY ) ) ); ++x )
-//             {
-//                 hasWritten = true;
-//                 oled_setPixel( x, y, colour );
-//                 // sleep_ms(20);
-//             }
-//             if( hasWritten == false )
-//                 break;
-//         }
-//     }
-    
-//     if( permille > 750 )
-//     {
-//         for( uint8_t x = centreX - outerRadius; x < centreX; ++x )
-//         {
-//             for( uint8_t y = centreY; y < centreY + (uint8_t) sqrt( ( outerRadius * outerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) ); ++y )
-//             {
-//                 oled_setPixel( x, y, colour );
-//             }
-//         }
-//     }
-
-    
-//     // Fill the inner circle
-//     uint8_t yBound;
-//     if( innerRadius != 0 )
-//     {
-//         for( uint8_t x = centreX - innerRadius; x < centreX + innerRadius; ++x )
-//         {
-//             yBound = (uint8_t) sqrt( ( innerRadius * innerRadius ) - ( ( x - centreX ) * ( x - centreX ) ) );
-//             // printf("%d\n", ( innerRadius * innerRadius ) - ( ( x - innerRadius ) * ( x - innerRadius ) ));
-//             for( uint8_t y = centreY - yBound; y < centreY + yBound; ++y )
-//             {
-//                 oled_setPixel( x, y, 0x0000 );
-//             }
-//         }
-//     }
-// }
 
 int oled_loadingCircleInit( uint8_t originX, uint8_t originY, uint8_t outerRadius, 
     uint8_t innerRadius, uint16_t colour, uint8_t borderSize ) 
@@ -1124,6 +1027,94 @@ void oled_terminalDeinit( void )
 }
 
 #endif /* defined OLED_INCLUDE_FONT8 || defined OLED_INCLUDE_FONT12 || defined OLED_INCLUDE_FONT16 || defined OLED_INCLUDE_FONT20 || defined OLED_INCLUDE_FONT24 */
+
+#ifdef OLED_INCLUDE_SD_IMAGES
+
+int oled_sdWriteImage( const char filename[], uint8_t originX, uint8_t originY )
+{
+    FRESULT fr;
+    FATFS fs;
+    FIL fil;
+    // int ret;
+    char buf[OLED_SD_BUFFER_SIZE];
+
+    // Mount the SD card
+    fr = f_mount( &fs, "0:", 1 );
+    if( fr != FR_OK )
+        return 1;
+
+    // Open the file that needs to be read
+    fr = f_open( &fil, filename, FA_READ );
+    if( fr != FR_OK )
+        return 2;
+
+    // Read the file and push to the display
+    uint8_t x = originX;
+    uint8_t y = originY;
+    uint8_t imageWidth = 0U;  // Init to invalid number
+    uint8_t imageHeight = 0U; // Init to invalid number
+    uint16_t pixelBuffer = 0U;
+    uint8_t bytesInPixelBuffer = 0U;
+    uint8_t byteNumber;
+    uint8_t nextByte;
+    while( f_gets( buf, sizeof(buf), &fil ) )
+    {
+        for( byteNumber = 0U; byteNumber < ( OLED_SD_BUFFER_SIZE / 2U ); byteNumber++ )
+        {
+            nextByte = ( ( buf[ byteNumber * 2U ] - 32U ) << 4 ) + ( buf[ ( byteNumber * 2U ) + 1U ] -32U );
+
+            // First two bytes are image width and image height
+            if( imageWidth == 0U )
+                imageWidth = nextByte;
+            else if( imageHeight == 0U )
+                imageHeight = nextByte;
+            // The rest of the data is part of the image
+            else
+            {
+                // Add a byte to the pixel buffer
+                if( bytesInPixelBuffer == 0U )
+                {
+                    pixelBuffer = 0x0000U;
+                    pixelBuffer = nextByte << 8;
+                    bytesInPixelBuffer = 1;
+                }
+                else if( bytesInPixelBuffer )
+                {
+                    pixelBuffer |= nextByte;
+                    // bytesInPixelBuffer = 2;
+
+                    // Push to the display
+                    oled_setPixel( x, y, pixelBuffer );
+                    ++x;
+                    if( x == ( originX + imageWidth ) )
+                    {
+                        ++y;
+                        x = originX;
+                        if( y == ( originY + imageHeight ) )
+                        {
+                            // Break the while loop, stop reading from SD card
+                            break;
+                        }
+                    }
+                    bytesInPixelBuffer = 0U;
+                }
+            }
+        }
+    }
+    printf("Image Height = %d, Image Width = %d\n", imageHeight, imageWidth);
+
+    // Close the file
+    fr = f_close( &fil );
+    if( fr != FR_OK )
+        return 3;
+
+    // Unmount the SD card
+    f_unmount( "0:" );
+    
+    return 0;
+}
+
+#endif // OLED_INCLUDE_SD_IMAGES
 
 /* --- MODULE SCOPE FUNCTION IMPLEMENTATIONS ---------------------------------- */
 

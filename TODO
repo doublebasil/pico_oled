@@ -1,8 +1,7 @@
-Cut out the middle of the loading donut
+Add image support
 
 Move the loading circle bitmap pushing code out into it's own module
-scope function
-
+scope function so...
 Add a loading circle colour changing function, which using the loading circle
 bitmap pushing function?
 
@@ -14,21 +13,8 @@ Make sure all the bitmap setting functions don't set values outside of the
 calloc boundary. Also make sure we aren't using any negative indexes for the
 bitmap pointers
 
-Add image support
-
 Neaten the oled_test function, make the gradients use the display dimensions
 in the calculations
 
 Add QR generation
 
-Add extra loading bar functions, so we'll have
-oled_roundLoadingBarInit
-oled_roundLoadingBarUpdate
-oled_roundLoadingBarEnd
-Init will malloc a bitmap, so that the update only has to update
-the pixels that have changed
-End will free the bitmap
-Although, might be a bit over the top for a simple loading bar
-And might have to malloc quite a bit of memory
-By the time you've done all the bitwise operations with the bitmap
-I'm not sure I'll be much better off in terms of speed

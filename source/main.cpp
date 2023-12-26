@@ -37,84 +37,44 @@ int main( void )
         return 1;
     }
 
-    int result = oled_loadingCircleInit( 64U, 64U, 60U, 20U, 0b0000000000011111, 0 );
-    if( result != 0 )
+    // Initialise the SD card
+    if( !sd_init_driver() )
     {
-        printf("Circle thing failed with code %d\n", result);
-        for(;;) {sleep_ms(1000);}
+        printf( "Couldn't initialise the SD card :(\n" );
+        while( true );
     }
     else
-    {
-        printf("Init successful\n");
-    }
-    // oled_fill( 0, 60+20, 127, 60+20, 0xFFFFU ); // y = 55
-    // oled_fill( 0, 60-20, 127, 60-20, 0xFFFFU ); // y = 65
-    // oled_fill( 60+20, 0U, 60+20, 127U, 0xFFFFU ); // x = 55
-    // oled_fill( 60-20, 0U, 60-20, 127U, 0xFFFFU ); // x = 65
-    // oled_loadingCircleDisplay( 252U );
-    // // oled_setPixel(60, 60, 0xFFFFU);
-    // sleep_ms( 500 );
-    // oled_loadingCircleDisplay( 252U );
-    // sleep_ms( 500 );
-    // oled_loadingCircleDisplay( 0U );
-    // sleep_ms( 500 );
-    // oled_loadingCircleDisplay( 252U );
+        printf( "SD card initialised ok!\n" );
 
-    // oled_loadingCircleDisplay( ( 63U * 3U ) + 20U );
+    int result;
+    result = oled_sdWriteImage( "example1.txt", 0, 0 );
 
-    // oled_loadingCircleDisplay( 252U );
+    printf("sdWriteImage returned %d\n", result);
 
-    bool state = true;
-    uint8_t p = 1U;
-    while( p != 0U )
-    {
-        // oled_setPixel( 60, 60, 0xFFFFU );
-        if( state )
-        {
-            ++p;
-            if( p == 252U )
-            {
-                state = false;
-            }
-        }
-        else
-        {
-            --p;
-        }
-        printf("p=%d\n", p);
-        oled_loadingCircleDisplay( p );
-        if( p == 252U )
-            sleep_ms( 500U );
-        else
-            sleep_ms( 5U );
-    }
 
-    // typedef enum
+    // bool state = true;
+    // uint8_t p = 1U;
+    // while( p != 0U )
     // {
-    //     increasing,
-    //     decreasing,
-    // } t_direction;
-    // t_direction dir = increasing;
-    // uint8_t diff = 25;
-    // uint8_t p = (63U*3) - diff;
-    // while( true )
-    // {
-    //     oled_loadingCircleDisplay( p );
-    //     printf("p=%d\n", p);
-    //     sleep_ms( 50 );
-
-    //     if( dir == increasing )
+    //     // oled_setPixel( 60, 60, 0xFFFFU );
+    //     if( state )
     //     {
     //         ++p;
-    //         if( p == ( (63U*3) + diff ) )
-    //             dir = decreasing;
+    //         if( p == 252U )
+    //         {
+    //             state = false;
+    //         }
     //     }
     //     else
     //     {
     //         --p;
-    //         if( p == ( (63U*3) - diff ) )
-    //             dir = increasing;
     //     }
+    //     printf("p=%d\n", p);
+    //     oled_loadingCircleDisplay( p );
+    //     if( p == 252U )
+    //         sleep_ms( 500U );
+    //     else
+    //         sleep_ms( 5U );
     // }
 
     printf( "End\n" );
