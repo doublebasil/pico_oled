@@ -37,6 +37,8 @@ int main( void )
         return 1;
     }
 
+    oled_fill( 0, 0, 127, 127, 0b0000000000011111 );
+
     // Initialise the SD card
     if( !sd_init_driver() )
     {

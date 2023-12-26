@@ -32,7 +32,7 @@
 #endif /* OLED_INCLUDE_FONT24 */
 
 #ifdef OLED_INCLUDE_SD_IMAGES
-// Buffer size must be even
+// BUFFER SIZE MUST BE A MULTIPLE OF 4
 #define OLED_SD_BUFFER_SIZE     ( 100U )
 #endif // OLED_INCLUDE_SD_IMAGES
 
@@ -1053,53 +1053,89 @@ int oled_sdWriteImage( const char filename[], uint8_t originX, uint8_t originY )
     uint8_t y = originY;
     uint8_t imageWidth = 0U;  // Init to invalid number
     uint8_t imageHeight = 0U; // Init to invalid number
-    uint16_t pixelBuffer = 0U;
-    uint8_t bytesInPixelBuffer = 0U;
-    uint8_t byteNumber;
-    uint8_t nextByte;
+    uint16_t pixelValue;
+    // uint16_t pixelBuffer = 0U;
+    // uint8_t bytesInPixelBuffer = 0U;
+    // uint8_t nextByte;
+    bool end = false;
     while( f_gets( buf, sizeof(buf), &fil ) )
     {
-        for( byteNumber = 0U; byteNumber < ( OLED_SD_BUFFER_SIZE / 2U ); byteNumber++ )
+        // Read in blocks of 4, the width and height are stored in the first 4 characters
+        // and each pixel also takes up 4 characters
+        for( uint16_t index = 0U; index < OLED_SD_BUFFER_SIZE; index += 4 )
         {
-            nextByte = ( ( buf[ byteNumber * 2U ] - 32U ) << 4 ) + ( buf[ ( byteNumber * 2U ) + 1U ] -32U );
-
-            // First two bytes are image width and image height
+            // Check if the image width and height have been read
             if( imageWidth == 0U )
-                imageWidth = nextByte;
-            else if( imageHeight == 0U )
-                imageHeight = nextByte;
-            // The rest of the data is part of the image
-            else
             {
-                // Add a byte to the pixel buffer
-                if( bytesInPixelBuffer == 0U )
-                {
-                    pixelBuffer = 0x0000U;
-                    pixelBuffer = nextByte << 8;
-                    bytesInPixelBuffer = 1;
-                }
-                else if( bytesInPixelBuffer )
-                {
-                    pixelBuffer |= nextByte;
-                    // bytesInPixelBuffer = 2;
+                imageWidth = ( ( buf[index] - 32U ) << 4 ) + ( buf[index+1U] -32U );
+                imageHeight = ( ( buf[index+2U] - 32U ) << 4 ) + ( buf[index+3U] -32U );
+                continue;
+            }
+            // Otherwise, update the display
+            pixelValue = ( ( (uint16_t) buf[index] - 32U ) << 12 ) + ( ( (uint16_t) buf[index+1] - 32U ) << 8 ) + ( ( (uint16_t)  buf[index+2] - 32U ) << 4 ) + ( (uint16_t)  buf[index+3] - 32U );
 
-                    // Push to the display
-                    oled_setPixel( x, y, pixelBuffer );
-                    ++x;
-                    if( x == ( originX + imageWidth ) )
-                    {
-                        ++y;
-                        x = originX;
-                        if( y == ( originY + imageHeight ) )
-                        {
-                            // Break the while loop, stop reading from SD card
-                            break;
-                        }
-                    }
-                    bytesInPixelBuffer = 0U;
+            oled_setPixel( x, y, pixelValue );
+
+            ++x;
+            if( x == ( originX + imageWidth ) )
+            {
+                ++y;
+                x = originX;
+                if( y == originY + imageHeight )
+                {
+                    end = true;
+                    break;
                 }
             }
         }
+
+        if( end )
+            break;
+
+        //     if( end )
+        //         break;
+            
+        //     nextByte = ( ( buf[ byteNumber * 2U ] - 32U ) << 4 ) + ( buf[ ( byteNumber * 2U ) + 1U ] -32U );
+
+        //     // First two bytes are image width and image height
+        //     if( imageWidth == 0U )
+        //         imageWidth = nextByte;
+        //     else if( imageHeight == 0U )
+        //         imageHeight = nextByte;
+        //     // The rest of the data is part of the image
+        //     else
+        //     {
+        //         // Add a byte to the pixel buffer
+        //         if( bytesInPixelBuffer == 0U )
+        //         {
+        //             pixelBuffer = 0x0000U;
+        //             pixelBuffer = nextByte << 8;
+        //             bytesInPixelBuffer = 1;
+        //         }
+        //         else if( bytesInPixelBuffer == 1U )
+        //         {
+        //             pixelBuffer |= nextByte;
+        //             // bytesInPixelBuffer = 2; // But this will instantly get set back to 0
+
+        //             // Push to the display
+        //             printf("x=%d, y=%d\n", x, y);
+        //             oled_setPixel( x, y, pixelBuffer );
+        //             ++x;
+        //             if( x == ( originX + imageWidth ) )
+        //             {
+        //                 ++y;
+        //                 x = originX;
+        //                 if( y == ( originY + imageHeight ) )
+        //                 {
+        //                     // Break the while loop, stop reading from SD card
+        //                     end = true;
+        //                     break;
+        //                 }
+        //             }
+        //             bytesInPixelBuffer = 0U;
+        //         }
+        //     }
+        // }
     }
     printf("Image Height = %d, Image Width = %d\n", imageHeight, imageWidth);
 
