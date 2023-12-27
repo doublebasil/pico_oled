@@ -12,6 +12,7 @@
 #define OLED_INCLUDE_FONT24                     // Uses ~6844 bytes
 #define OLED_WRITE_TEXT_CHARACTER_GAP     ( 0 ) // Number of pixels between characters
 #define OLED_INCLUDE_SD_IMAGES
+#define OLED_INCLUDE_QR_GENERATOR
 
 #include <stdint.h>
 
@@ -325,17 +326,33 @@ void oled_terminalDeinit( void );
  * are created using a .py file. You can specify where the image is drawn on the 
  * screen by using the xOrigin and yOrigin.
  * IMPORTANT: When this function is called, sd_init_driver() must have already been
- * called (and returned 0), but the sd card should be unmounted.
+ * called (and returned 0), and the sd card should be unmounted.
  *
  * filename: Name of encoded txt file, e.g. "image1.txt"
  *
- * returns: int 0 on sucess
+ * returns: int 0 on success
  *              1 on fail due to failed SD card mounting
  *              2 on fail because the specified file couldn't be opened
  *              3 on fail because the file couldn't be closed
  */
 int oled_sdWriteImage( const char filename[], uint8_t originX, uint8_t originY );
 
-#endif
+#endif // defined OLED_INCLUDE_SD_IMAGES
+
+#ifdef OLED_INCLUDE_QR_GENERATOR
+
+/*
+ * Function: oled_printQrCode
+ * --------------------
+ * Draw a QR code on the screen
+ *
+ * text: The text to be encoded to the display
+ *
+ * returns: int 0 on success
+ *              1 on fail due to 
+ */
+int oled_printQrCode( const char text[] );
+
+#endif // defined OLED_INCLUDE_QR_GENERATOR
 
 #endif /* OLED_HPP */

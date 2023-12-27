@@ -7,6 +7,9 @@
 
 #include "oled.hpp"
 
+#include "sd_card.h"
+#include "ff.h"
+
 inline uint64_t micros()
 {
     return to_us_since_boot( get_absolute_time() );

@@ -13,6 +13,10 @@
 #include "pico/binary_info.h"
 #include "hardware/spi.h"
 
+/* --- OTHER LIBRARY INCLUDES ------------------------------------------------ */
+#ifdef OLED_INCLUDE_QR_GENERATOR
+#include "qrcodegen.h"
+#endif
 
 /* --- PREPROCESSOR -----------------------------------------------------------*/
 #ifdef OLED_INCLUDE_FONT8
@@ -1133,6 +1137,17 @@ int oled_sdWriteImage( const char filename[], uint8_t originX, uint8_t originY )
 }
 
 #endif // OLED_INCLUDE_SD_IMAGES
+
+#ifdef OLED_INCLUDE_QR_GENERATOR
+
+int oled_printQrCode( const char text[] )
+{
+
+
+    return 0; // Success
+}
+
+#endif // defined OLED_INCLUDE_QR_GENERATOR
 
 /* --- MODULE SCOPE FUNCTION IMPLEMENTATIONS ---------------------------------- */
 
