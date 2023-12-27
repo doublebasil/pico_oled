@@ -24,12 +24,21 @@ int main( void )
     // sleep_ms( 800U );
 
     /* PICO               | Display
-     * -----------------------------
+     * ---------------------------------------
      * GPIO 19 (SPI0 TX)  | DIN
      * GPIO 18 (SPI0 SCK) | CLK
      * GPIO 17            | CS
      * GPIO 16            | DC
      * GPIO 20            | RST
+     * 
+     * PICO               | SD Card, if using
+     * ---------------------------------------
+     * 5V                 | VCC
+     * Ground             | Ground
+     * GPIO 8 (SPI1 RX)   | MISO
+     * GPIO 11 (SPI1 TX)  | MOSI
+     * GPIO 10 (SPI SCK)  | SCK
+     * GPIO 9 (SPI1 CSn)  | CS
      */
 	if( oled_init( 19, 18, 17, 16, 20, 0, 14000000U, 128U, 128U ) != 0 )
     {
