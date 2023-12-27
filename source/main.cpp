@@ -39,6 +39,12 @@ int main( void )
 
     oled_fill( 0, 0, 127, 127, 0b0000000000011111 );
 
+    for( int i = 0; i < 10; i++ )
+    {
+        sleep_ms( 100 );
+        printf("Booting\n");
+    }
+
     // Initialise the SD card
     if( !sd_init_driver() )
     {
@@ -49,8 +55,13 @@ int main( void )
         printf( "SD card initialised ok!\n" );
 
     int result;
-    result = oled_sdWriteImage( "example1.txt", 0, 0 );
 
+    result = oled_sdWriteImage( "example2.txt", 20, 40 );
+    printf("sdWriteImage returned %d\n", result);
+
+    sleep_ms( 1000 );
+
+    result = oled_sdWriteImage( "example1.txt", 0, 0 );
     printf("sdWriteImage returned %d\n", result);
 
 

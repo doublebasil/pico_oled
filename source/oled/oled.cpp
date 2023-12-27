@@ -32,7 +32,6 @@
 #endif /* OLED_INCLUDE_FONT24 */
 
 #ifdef OLED_INCLUDE_SD_IMAGES
-// BUFFER SIZE MUST BE A MULTIPLE OF 4
 #define OLED_SD_BUFFER_SIZE     ( 100U )
 #endif // OLED_INCLUDE_SD_IMAGES
 
@@ -1035,7 +1034,6 @@ int oled_sdWriteImage( const char filename[], uint8_t originX, uint8_t originY )
     FRESULT fr;
     FATFS fs;
     FIL fil;
-    // int ret;
     char buf[OLED_SD_BUFFER_SIZE];
 
     // Mount the SD card
@@ -1053,91 +1051,74 @@ int oled_sdWriteImage( const char filename[], uint8_t originX, uint8_t originY )
     uint8_t y = originY;
     uint8_t imageWidth = 0U;  // Init to invalid number
     uint8_t imageHeight = 0U; // Init to invalid number
-    uint16_t pixelValue;
-    // uint16_t pixelBuffer = 0U;
-    // uint8_t bytesInPixelBuffer = 0U;
-    // uint8_t nextByte;
+    uint16_t nibbleBuffer;
+    uint8_t nibblesInBuffer = 0U;
     bool end = false;
     while( f_gets( buf, sizeof(buf), &fil ) )
     {
-        // Read in blocks of 4, the width and height are stored in the first 4 characters
-        // and each pixel also takes up 4 characters
-        for( uint16_t index = 0U; index < OLED_SD_BUFFER_SIZE; index += 4 )
+        for( uint8_t bufferIndex = 0U; bufferIndex < OLED_SD_BUFFER_SIZE; bufferIndex++ )
         {
-            // Check if the image width and height have been read
-            if( imageWidth == 0U )
+            if( buf[bufferIndex] == 0 )
+                break; // End of buffer
+            if( buf[bufferIndex] == 10 )
+                continue; // Newline within file
+            if( ( buf[bufferIndex] < 32U ) || ( buf[bufferIndex] > 63U ) )
+                buf[bufferIndex] = 32; // To avoid bad nibbles over spilling
+
+            // Add the nibble to the nibbleBuffer
+            if( nibblesInBuffer == 0U )
             {
-                imageWidth = ( ( buf[index] - 32U ) << 4 ) + ( buf[index+1U] -32U );
-                imageHeight = ( ( buf[index+2U] - 32U ) << 4 ) + ( buf[index+3U] -32U );
-                continue;
+                nibbleBuffer = ( (uint8_t) buf[bufferIndex] - 32U ) << 12;
             }
-            // Otherwise, update the display
-            pixelValue = ( ( (uint16_t) buf[index] - 32U ) << 12 ) + ( ( (uint16_t) buf[index+1] - 32U ) << 8 ) + ( ( (uint16_t)  buf[index+2] - 32U ) << 4 ) + ( (uint16_t)  buf[index+3] - 32U );
-
-            oled_setPixel( x, y, pixelValue );
-
-            ++x;
-            if( x == ( originX + imageWidth ) )
+            else if( nibblesInBuffer == 1U )
             {
-                ++y;
-                x = originX;
-                if( y == originY + imageHeight )
+                nibbleBuffer += ( (uint8_t) buf[bufferIndex] - 32U ) << 8;
+            }
+            else if( nibblesInBuffer == 2U )
+            {
+                nibbleBuffer += ( (uint8_t) buf[bufferIndex] - 32U ) << 4;
+            }
+            else // if( nibbleBuffer == 3U )
+            {
+                nibbleBuffer += (uint8_t) buf[bufferIndex] - 32U;
+            }
+            ++nibblesInBuffer;
+
+            // Check if the nibble buffer is full
+            if( nibblesInBuffer == 4U )
+            {
+                // Do something with the full nibbleBuffer
+                // Check if the image width and height have been read
+                if( imageWidth == 0U )
                 {
-                    end = true;
-                    break;
+                    imageWidth = (uint8_t) ( ( nibbleBuffer & 0b1111111100000000U ) >> 8 );
+                    imageHeight = (uint8_t) ( nibbleBuffer & 0b0000000011111111U );
                 }
+                // Otherwise write to the display
+                else
+                {
+                    oled_setPixel( x, y, nibbleBuffer );
+
+                    ++x;
+                    if( x == ( originX + imageWidth ) )
+                    {
+                        ++y;
+                        x = originX;
+                        if( y == originY + imageHeight )
+                        {
+                            end = true;
+                            break;
+                        }
+                    }
+
+                }
+                // The nibbleBuffer is now considered empty
+                nibblesInBuffer = 0U;
             }
         }
-
         if( end )
             break;
-
-        //     if( end )
-        //         break;
-            
-        //     nextByte = ( ( buf[ byteNumber * 2U ] - 32U ) << 4 ) + ( buf[ ( byteNumber * 2U ) + 1U ] -32U );
-
-        //     // First two bytes are image width and image height
-        //     if( imageWidth == 0U )
-        //         imageWidth = nextByte;
-        //     else if( imageHeight == 0U )
-        //         imageHeight = nextByte;
-        //     // The rest of the data is part of the image
-        //     else
-        //     {
-        //         // Add a byte to the pixel buffer
-        //         if( bytesInPixelBuffer == 0U )
-        //         {
-        //             pixelBuffer = 0x0000U;
-        //             pixelBuffer = nextByte << 8;
-        //             bytesInPixelBuffer = 1;
-        //         }
-        //         else if( bytesInPixelBuffer == 1U )
-        //         {
-        //             pixelBuffer |= nextByte;
-        //             // bytesInPixelBuffer = 2; // But this will instantly get set back to 0
-
-        //             // Push to the display
-        //             printf("x=%d, y=%d\n", x, y);
-        //             oled_setPixel( x, y, pixelBuffer );
-        //             ++x;
-        //             if( x == ( originX + imageWidth ) )
-        //             {
-        //                 ++y;
-        //                 x = originX;
-        //                 if( y == ( originY + imageHeight ) )
-        //                 {
-        //                     // Break the while loop, stop reading from SD card
-        //                     end = true;
-        //                     break;
-        //                 }
-        //             }
-        //             bytesInPixelBuffer = 0U;
-        //         }
-        //     }
-        // }
     }
-    printf("Image Height = %d, Image Width = %d\n", imageHeight, imageWidth);
 
     // Close the file
     fr = f_close( &fil );
