@@ -392,6 +392,7 @@ int oled_loadingBarInit( uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2,
         m_loadingBarHorizontalTopLeftY = y1;
         m_loadingBarHorizontalBottomRightY = y2;
     }
+    else
     {
         m_loadingBarHorizontalTopLeftY = y2;
         m_loadingBarHorizontalBottomRightY = y1;
@@ -444,7 +445,7 @@ void oled_loadingBarDisplay( uint8_t progress )
     while( remainingPixelsToFill > 8U )
     {
         // Make sure we aren't writing out of bounds
-        if( bitmapIndex >= m_loadingBarCallocSize )
+        if( bitmapIndex >= m_loadingBarCallocSize ) // bitmapIndex is unsigned so don't check bitmapIndex isn't negative
             return;
         // Set all the pixels within this byte to on
         bitmapToChange[bitmapIndex] = 0b11111111U;

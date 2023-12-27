@@ -1,7 +1,3 @@
-Make sure all the bitmap setting functions don't set values outside of the 
-calloc boundary. Also make sure we aren't using any negative indexes for the
-bitmap pointers
-
 Add QR generation
 
 Move the loading circle bitmap pushing code out into it's own module
