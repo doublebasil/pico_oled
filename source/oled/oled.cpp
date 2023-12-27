@@ -369,7 +369,7 @@ void oled_test( void ) // Needs rewriting
 
 #ifdef OLED_INCLUDE_LOADING_BAR_HORIZONTAL
 int oled_loadingBarInit( uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2, 
-    uint16_t colour, uint8_t borderSize )
+    uint16_t colour )
 {
     // Ensure the loading bar isn't already initialised
     if( m_loadingBarState != e_loadingBarStateUninitialised )
@@ -530,7 +530,7 @@ void oled_loadingBarDeinit( void )
 #ifdef OLED_INCLUDE_LOADING_CIRCLE
 
 int oled_loadingCircleInit( uint8_t originX, uint8_t originY, uint8_t outerRadius, 
-    uint8_t innerRadius, uint16_t colour, uint8_t borderSize ) 
+    uint8_t innerRadius, uint16_t colour ) 
 {
     // Ensure the loading bar isn't already initialised
     if( m_loadingBarState != e_loadingBarStateUninitialised )

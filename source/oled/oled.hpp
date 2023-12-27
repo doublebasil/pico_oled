@@ -100,14 +100,13 @@ void oled_test( void );
  * x1, y1: coordinates of corner 1
  * x2, y2: coordinates of corner opposite corner 1
  * colour: Pixel colour in RGB565 format
- * borderSize: Size of border around the loading bar in pixels, set to 0 for no border
  * 
  * returns: int 0 on success
  *          1 on fail due to loading bar already being initialised
  *          2 on fail due to failed calloc
  */
 int oled_loadingBarInit( uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2, 
-    uint16_t colour, uint8_t borderSize );
+    uint16_t colour );
 
 /*
  * Function: oled_loadingBarDisplay
@@ -134,25 +133,6 @@ void oled_loadingBarDeinit();
 #endif /* OLED_INCLUDE_LOADING_BAR_HORIZONTAL */
 
 #ifdef OLED_INCLUDE_LOADING_CIRCLE
-// /*
-//  * Function: oled_loadingBarRound
-//  * --------------------
-//  * Display a horizontal loading bar, specifying coordinates for the corners of
-//  * the bar. Progress measured in permille (out of 1000)
-//  *
-//  * centreX: x coordinate of the centre of the loading bar
-//  * centreY: y coordinate of the centre of the loading bar
-//  * outerRadius: Distance in pixels from centre point to the outer edge of the loading bar
-//  * innerRadius: Distance in pixels from centre point to the inner edge of the loading bar
-//  * permille: Progress out of 1000 (1000 is done, 0 is empty)
-//  * colour: Colour of the loading bar in RGB565
-//  * hasBorder: Set to true to get a border around the loading bar
-//  *
-//  * returns: void
-//  */
-// void oled_loadingBarRound( uint8_t centreX, uint8_t centreY, uint8_t outerRadius, 
-//     uint8_t innerRadius, uint16_t permille, uint16_t colour, bool hasBorder );
-
 /*
  * Function: oled_loadingCircleInit
  * --------------------
@@ -162,7 +142,6 @@ void oled_loadingBarDeinit();
  * outerRadius: Radius of the loading circle
  * innerRadius: Make it a loading donut with an inner radius of this size
  * colour: colour of the loading circle in RGB565
- * borderSize: Put a border around the loading circle, or set to 0 for no border
  *
  * returns: int 0 on success
  *          1 on fail due to loading bar already being initialised
@@ -170,7 +149,7 @@ void oled_loadingBarDeinit();
  *          3 on fail due to bad parameters
  */
 int oled_loadingCircleInit( uint8_t originX, uint8_t originY, uint8_t outerRadius, 
-    uint8_t innerRadius, uint16_t colour, uint8_t borderSize );
+    uint8_t innerRadius, uint16_t colour );
 
 /*
  * Function: oled_loadingCircleDisplay
