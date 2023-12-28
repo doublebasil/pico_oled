@@ -1,6 +1,7 @@
 add_executable(${PROJECT_NAME}
     main.cpp
     oled/oled.cpp
+    QR-Code-generator/qrcodegen.c
     )
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/no-OS-FatFS-SD-SPI-Rpi-Pico/FatFs_SPI build-fatfs-spi-pico)

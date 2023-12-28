@@ -49,58 +49,34 @@ int main( void )
         return 1;
     }
 
-    oled_fill( 0, 0, 127, 127, 0b0000000000011111 );
-
     for( int i = 0; i < 10; i++ )
     {
         sleep_ms( 100 );
         printf("Booting\n");
     }
 
-    // Initialise the SD card
-    if( !sd_init_driver() )
-    {
-        printf( "Couldn't initialise the SD card :(\n" );
-        while( true );
-    }
-    else
-        printf( "SD card initialised ok!\n" );
-
-    int result;
-
-    result = oled_sdWriteImage( "example2.txt", 20, 40 );
-    printf("sdWriteImage returned %d\n", result);
-
-    sleep_ms( 1000 );
-
-    result = oled_sdWriteImage( "example1.txt", 0, 0 );
-    printf("sdWriteImage returned %d\n", result);
-
-
-    // bool state = true;
-    // uint8_t p = 1U;
-    // while( p != 0U )
+    // // Initialise the SD card
+    // if( !sd_init_driver() )
     // {
-    //     // oled_setPixel( 60, 60, 0xFFFFU );
-    //     if( state )
-    //     {
-    //         ++p;
-    //         if( p == 252U )
-    //         {
-    //             state = false;
-    //         }
-    //     }
-    //     else
-    //     {
-    //         --p;
-    //     }
-    //     printf("p=%d\n", p);
-    //     oled_loadingCircleDisplay( p );
-    //     if( p == 252U )
-    //         sleep_ms( 500U );
-    //     else
-    //         sleep_ms( 5U );
+    //     printf( "Couldn't initialise the SD card :(\n" );
+    //     while( true );
     // }
+    // else
+    //     printf( "SD card initialised ok!\n" );
+
+    // int result;
+    // result = oled_sdWriteImage( "example2.txt", 20, 40 );
+    // printf("sdWriteImage returned %d\n", result);
+
+    // sleep_ms( 1000 );
+
+    // result = oled_sdWriteImage( "example1.txt", 0, 0 );
+    // printf("sdWriteImage returned %d\n", result);
+
+    oled_fill( 0, 0, 127, 127, 0xFFFFU );
+    int qrResult;
+    qrResult = oled_printQrCode( "http://192.168.1.120" );
+    printf( "qrResult=%d\n", qrResult );
 
     printf( "End\n" );
     for( ;; ) 

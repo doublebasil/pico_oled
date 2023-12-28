@@ -349,7 +349,7 @@ int oled_sdWriteImage( const char filename[], uint8_t originX, uint8_t originY )
  * text: The text to be encoded to the display
  *
  * returns: int 0 on success
- *              1 on fail due to 
+ *              1 on fail due to QR generation library failing
  */
 int oled_printQrCode( const char text[] );
 

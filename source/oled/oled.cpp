@@ -1,7 +1,7 @@
 /* --- STANDARD LIBRARY INCLUDES ---------------------------------------------- */
 #include "oled.hpp"
 
-#include <cstdlib> // Is this really needed? Apparently contains the "free" function?
+#include <cstdlib> // For the 'free' function
 #include <stdio.h> // Just for debugging
 #ifdef OLED_INCLUDE_LOADING_CIRCLE
 #include <math.h>
@@ -1142,7 +1142,63 @@ int oled_sdWriteImage( const char filename[], uint8_t originX, uint8_t originY )
 
 int oled_printQrCode( const char text[] )
 {
+    // The buffer size is determined in the qrcodegen.h file
+    // This function will use over 8kB of stack memory while in use
 
+    // CONSIDER ADJUSTING THE QR CODE VERSION TO SAVE SOME MEMORY?
+
+    // QR code generation
+    enum qrcodegen_Ecc errCorLvl = qrcodegen_Ecc_LOW;
+    uint8_t qrcode[qrcodegen_BUFFER_LEN_MAX];
+	uint8_t tempBuffer[qrcodegen_BUFFER_LEN_MAX];
+    bool ok = qrcodegen_encodeText( text, tempBuffer, qrcode, errCorLvl,
+		qrcodegen_VERSION_MIN, qrcodegen_VERSION_MAX, qrcodegen_Mask_AUTO, true );
+    if( !ok )
+        return 1; // QR code generation failed
+
+    // Display the QR code on the display
+    const uint8_t qrSize = (uint8_t) qrcodegen_getSize( qrcode );
+    const uint8_t pixelsPerQrBit = m_displayWidth / qrSize;
+    const uint8_t qrOrigin = ( m_displayWidth - ( pixelsPerQrBit * qrSize ) ) / 2U;
+    uint8_t qrcodeX = 0U;
+    uint8_t qrcodeY = 0U;
+    uint8_t displayX;
+    uint8_t displayY;
+
+    while( qrcodeY < qrSize )
+    {
+        if( qrcodegen_getModule( qrcode, qrcodeX, qrcodeY ) )
+        {
+            // Typically you'd set the screen dark here
+            for( displayX = qrOrigin + ( qrcodeX * pixelsPerQrBit ); displayX < qrOrigin + ( qrcodeX * pixelsPerQrBit ) + pixelsPerQrBit; displayX++ )
+            {
+                for( displayY = qrOrigin + ( qrcodeY * pixelsPerQrBit ); displayY < qrOrigin + ( qrcodeY * pixelsPerQrBit ) + pixelsPerQrBit; displayY++ )
+                {
+                    oled_setPixel( displayX, displayY, 0x0000U );
+                }
+            }
+        }
+        else
+        {
+            // Typically you'd set the screen bright here
+            for( displayX = qrOrigin + ( qrcodeX * pixelsPerQrBit ); displayX < qrOrigin + ( qrcodeX * pixelsPerQrBit ) + pixelsPerQrBit; displayX++ )
+            {
+                for( displayY = qrOrigin + ( qrcodeY * pixelsPerQrBit ); displayY < qrOrigin + ( qrcodeY * pixelsPerQrBit ) + pixelsPerQrBit; displayY++ )
+                {
+                    oled_setPixel( displayX, displayY, 0xFFFFU );
+                }
+            }
+        }
+
+        ++qrcodeX;
+        if( qrcodeX == qrSize )
+        {
+            qrcodeX = 0U;
+            ++qrcodeY;
+        }
+    }
+
+    // True for dark
 
     return 0; // Success
 }
