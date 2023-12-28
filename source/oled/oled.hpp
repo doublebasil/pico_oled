@@ -347,11 +347,13 @@ int oled_sdWriteImage( const char filename[], uint8_t originX, uint8_t originY )
  * Draw a QR code on the screen
  *
  * text: The text to be encoded to the display
+ * colour1: This is typically black (0x0000U)
+ * colour2: This is typically white (0xFFFFU)
  *
  * returns: int 0 on success
  *              1 on fail due to QR generation library failing
  */
-int oled_printQrCode( const char text[] );
+int oled_printQrCode( const char text[], uint16_t colour1, uint16_t colour2 );
 
 #endif // defined OLED_INCLUDE_QR_GENERATOR
 

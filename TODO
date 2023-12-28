@@ -1,5 +1,3 @@
-Add QR generation
-
 Move the loading circle bitmap pushing code out into it's own module
 scope function so...
 Add a loading circle colour changing function, which using the loading circle

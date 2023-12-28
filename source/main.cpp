@@ -75,7 +75,7 @@ int main( void )
 
     oled_fill( 0, 0, 127, 127, 0xFFFFU );
     int qrResult;
-    qrResult = oled_printQrCode( "http://192.168.1.120" );
+    qrResult = oled_printQrCode( "http://192.168.1.120", 0x0000U, 0b0000000000011111U );
     printf( "qrResult=%d\n", qrResult );
 
     printf( "End\n" );

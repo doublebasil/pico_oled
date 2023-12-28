@@ -1140,7 +1140,7 @@ int oled_sdWriteImage( const char filename[], uint8_t originX, uint8_t originY )
 
 #ifdef OLED_INCLUDE_QR_GENERATOR
 
-int oled_printQrCode( const char text[] )
+int oled_printQrCode( const char text[], uint16_t colour1, uint16_t colour2 )
 {
     // The buffer size is determined in the qrcodegen.h file
     // This function will use over 8kB of stack memory while in use
@@ -1174,7 +1174,7 @@ int oled_printQrCode( const char text[] )
             {
                 for( displayY = qrOrigin + ( qrcodeY * pixelsPerQrBit ); displayY < qrOrigin + ( qrcodeY * pixelsPerQrBit ) + pixelsPerQrBit; displayY++ )
                 {
-                    oled_setPixel( displayX, displayY, 0x0000U );
+                    oled_setPixel( displayX, displayY, colour1 );
                 }
             }
         }
@@ -1185,7 +1185,7 @@ int oled_printQrCode( const char text[] )
             {
                 for( displayY = qrOrigin + ( qrcodeY * pixelsPerQrBit ); displayY < qrOrigin + ( qrcodeY * pixelsPerQrBit ) + pixelsPerQrBit; displayY++ )
                 {
-                    oled_setPixel( displayX, displayY, 0xFFFFU );
+                    oled_setPixel( displayX, displayY, colour2 );
                 }
             }
         }
