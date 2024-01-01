@@ -55,6 +55,14 @@ int main( void )
         printf("Booting\n");
     }
 
+    oled_terminalInit( 24, 0b1111100000000000U );
+    oled_terminalWrite( "Hello" );
+    oled_terminalWriteTemp( "world" );
+    sleep_ms( 1000 );
+    oled_terminalSetNewColour( 0b0000000000011111U );
+    sleep_ms( 1000 );
+    oled_terminalWrite( "test" );
+
     // // Initialise the SD card
     // if( !sd_init_driver() )
     // {
@@ -73,10 +81,12 @@ int main( void )
     // result = oled_sdWriteImage( "example1.txt", 0, 0 );
     // printf("sdWriteImage returned %d\n", result);
 
-    oled_fill( 0, 0, 127, 127, 0xFFFFU );
-    int qrResult;
-    qrResult = oled_printQrCode( "http://192.168.1.120", 0x0000U, 0b0000000000011111U );
-    printf( "qrResult=%d\n", qrResult );
+    
+    
+    // oled_fill( 0, 0, 127, 127, 0xFFFFU );
+    // int qrResult;
+    // qrResult = oled_printQrCode( "http://192.168.1.120", 0x0000U, 0b0000000000011111U );
+    // printf( "qrResult=%d\n", qrResult );
 
     printf( "End\n" );
     for( ;; ) 

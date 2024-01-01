@@ -303,6 +303,17 @@ void oled_terminalClear( void );
 void oled_terminalSetLine( uint8_t line );
 
 /*
+ * Function: oled_terminalSetNewColour
+ * --------------------
+ * Change the colour of the terminal
+ *
+ * colour: Colour to change the terminal to
+ *
+ * returns: void
+ */
+void oled_terminalSetNewColour( uint16_t colour );
+
+/*
  * Function: oled_terminalClear
  * --------------------
  * Write a temporary line to the terminal, next time a line is written it will
