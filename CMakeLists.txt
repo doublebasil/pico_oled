@@ -23,7 +23,7 @@ project(${PROJECT_NAME} C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17) # CXX is c++
 
-add_compile_options(-Wall) # Cannot use Werror due to FatFs_SPI library warnings
+add_compile_options(-Wall -Werror)
 
 pico_sdk_init()
 

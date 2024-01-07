@@ -100,6 +100,7 @@ uint8_t sd_spi_write(sd_card_t *pSD, const uint8_t value) {
 #else
     bool success = spi_transfer(pSD->spi, &value, &received, 1);
     myASSERT(success);
+    (void) success;
 #endif
     return received;
 }
