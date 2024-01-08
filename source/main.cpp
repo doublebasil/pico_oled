@@ -55,13 +55,20 @@ int main( void )
         printf("Booting\n");
     }
 
-    oled_terminalInit( 24, 0b1111100000000000U );
-    oled_terminalWrite( "Hello" );
-    oled_terminalWriteTemp( "world" );
-    sleep_ms( 1000 );
-    oled_terminalSetNewColour( 0b0000000000011111U );
-    sleep_ms( 1000 );
-    oled_terminalWrite( "test" );
+    // oled_terminalInit( 24, 0b1111100000000000U );
+    // oled_terminalWrite( "Hello" );
+    // oled_terminalWriteTemp( "world" );
+    // sleep_ms( 1000 );
+    // oled_terminalSetNewColour( 0b0000000000011111U );
+    // sleep_ms( 1000 );
+    // oled_terminalWrite( "test" );
+
+    oled_loadingCircleInit( 64, 64, 40, 20, 0b0000000000011111 );
+    for( int i = 0; i <= 252; i++ )
+    {
+        oled_loadingCircleDisplay( i );
+        sleep_ms( 10 );
+    }
 
     // // Initialise the SD card
     // if( !sd_init_driver() )

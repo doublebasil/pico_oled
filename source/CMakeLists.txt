@@ -1,6 +1,7 @@
 add_executable(${PROJECT_NAME}
     main.cpp
     oled/oled.cpp
+    oled/intcos.cpp
     QR-Code-generator/qrcodegen.c
     )
 
