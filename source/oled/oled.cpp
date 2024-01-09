@@ -291,6 +291,72 @@ void oled_fill( uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint16_t colour 
     }
 }
 
+void oled_drawLineBetweenPoints( uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, 
+    uint16_t colour, uint8_t thickness )
+{
+    /* To avoid the use of floats/doubles, int32_t will be used and each coordinate
+     * will be multipied by a constant */
+    const int32_t scale = 1000;
+    int32_t xScaled = (int32_t) x1 * scale;
+    int32_t yScaled = (int32_t) y1 * scale;
+    int32_t dx = (int32_t) x2 - (int32_t) x1;
+    int32_t dy = (int32_t) y2 - (int32_t) y1;
+    uint8_t x;
+    uint8_t y;
+
+    uint16_t stepsLimit;
+    uint16_t dxAbs;
+    uint16_t dyAbs;
+    
+    if( dx < 0 )
+        dxAbs = (uint16_t) ( -1 * dx );
+    else
+        dxAbs = (uint16_t) dx;
+
+    if( dy < 0 )
+        dyAbs = (uint16_t) ( -1 * dy );
+    else
+        dyAbs = (uint16_t) dy;
+    
+    if( dxAbs > dyAbs )
+        stepsLimit = dxAbs;
+    else
+        stepsLimit = dyAbs;
+
+    int32_t xIncrementScaled = ( dx * scale ) / stepsLimit;
+    int32_t yIncrementScaled = ( dy * scale ) / stepsLimit;
+
+    for( uint16_t step = 0U; step < stepsLimit; step++ )
+    {
+        x = (uint8_t) ( xScaled / scale );
+        y = (uint8_t) ( yScaled / scale );
+
+        if( thickness > 0 )
+        {
+            for( int16_t xThicken = x - thickness; xThicken < x + thickness + 1; xThicken++ )
+            {
+                if( xThicken < 0 )
+                    continue;
+                
+                for( int16_t yThicken = y - thickness; yThicken < y + thickness + 1; yThicken++ )
+                {
+                    if( yThicken < 0 )
+                        continue;
+
+                    oled_setPixel( (uint8_t) xThicken, (uint8_t) yThicken, colour );
+                }
+            }
+        }
+        else // don't thicken line
+        {
+            oled_setPixel( x, y, colour );
+        }
+
+        xScaled += xIncrementScaled;
+        yScaled += yIncrementScaled;
+    }
+}
+
 #ifdef OLED_INCLUDE_TEST_FUNCTION
 void oled_test( void ) // Needs rewriting
 {

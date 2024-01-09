@@ -63,12 +63,17 @@ int main( void )
     // sleep_ms( 1000 );
     // oled_terminalWrite( "test" );
 
-    oled_loadingCircleInit( 64, 64, 40, 20, 0b0000000000011111 );
-    for( int i = 0; i <= 252; i++ )
-    {
-        oled_loadingCircleDisplay( i );
-        sleep_ms( 10 );
-    }
+    // oled_loadingCircleInit( 64, 64, 40, 20, 0b0000000000011111 );
+    // for( int i = 0; i <= 252; i++ )
+    // {
+    //     oled_loadingCircleDisplay( i );
+    //     sleep_ms( 10 );
+    // }
+
+    oled_drawLineBetweenPoints( 0, 0, 127, 127, 0b1111100000000000U, 0 );
+    oled_drawLineBetweenPoints( 10, 20, 20, 127, 0b0000000000011111U, 1 );
+    oled_drawLineBetweenPoints( 20, 63, 100, 70, 0b0000011111100000U, 2 );
+    oled_drawLineBetweenPoints( 80, 100, 110, 112, 0xFFFFU, 3 );
 
     // // Initialise the SD card
     // if( !sd_init_driver() )
