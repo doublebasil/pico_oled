@@ -70,10 +70,17 @@ int main( void )
     //     sleep_ms( 10 );
     // }
 
-    oled_drawLineBetweenPoints( 0, 0, 127, 127, 0b1111100000000000U, 0 );
-    oled_drawLineBetweenPoints( 10, 20, 20, 127, 0b0000000000011111U, 1 );
-    oled_drawLineBetweenPoints( 20, 63, 100, 70, 0b0000011111100000U, 2 );
-    oled_drawLineBetweenPoints( 80, 100, 110, 112, 0xFFFFU, 3 );
+    oled_terminalInit( 12, 0xFFFF );
+    oled_terminalWriteTemp( "Hello" );
+    sleep_ms( 500 );
+    oled_terminalWriteTemp( "World" );
+    sleep_ms( 500 );
+    oled_terminalWriteTemp( "ABCDEFG" );
+
+    // oled_drawLineBetweenPoints( 0, 0, 127, 127, 0b1111100000000000U, 0 );
+    // oled_drawLineBetweenPoints( 10, 20, 20, 127, 0b0000000000011111U, 1 );
+    // oled_drawLineBetweenPoints( 20, 63, 100, 70, 0b0000011111100000U, 2 );
+    // oled_drawLineBetweenPoints( 80, 100, 110, 112, 0xFFFFU, 3 );
 
     // // Initialise the SD card
     // if( !sd_init_driver() )
