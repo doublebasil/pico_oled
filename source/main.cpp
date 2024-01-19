@@ -70,12 +70,17 @@ int main( void )
     //     sleep_ms( 10 );
     // }
 
-    oled_terminalInit( 12, 0xFFFF );
-    oled_terminalWriteTemp( "Hello" );
-    sleep_ms( 500 );
-    oled_terminalWriteTemp( "World" );
-    sleep_ms( 500 );
-    oled_terminalWriteTemp( "ABCDEFG" );
+    // oled_terminalInit( 12, 0xFFFF );
+    // oled_terminalWriteTemp( "Hello" );
+    // sleep_ms( 500 );
+    // oled_terminalWriteTemp( "World" );
+    // sleep_ms( 500 );
+    // oled_terminalWriteTemp( "ABCDEFG" );
+
+    gpio_init( 2 );
+    gpio_set_dir( 2, GPIO_IN );
+    oled_terminalInit( 24, 0xFFFFU );
+    
 
     // oled_drawLineBetweenPoints( 0, 0, 127, 127, 0b1111100000000000U, 0 );
     // oled_drawLineBetweenPoints( 10, 20, 20, 127, 0b0000000000011111U, 1 );
