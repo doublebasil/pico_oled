@@ -1012,8 +1012,6 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour )
         break;
     }
 
-    m_terminalHeightInLines = m_displayHeight / m_terminalFontSize;
-
     // Need enough bits to cover the the screen width, might have a few bits unused per row
     // This is so that bytes for each row align, which makes scrolling much much easier
     m_terminalBitmapBytesPerRow = (uint16_t) m_displayWidth / 8U;
@@ -1041,6 +1039,7 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour )
     m_terminalCurrentLine = 0U;
     m_terminalBitmapState = e_terminalBitmap1Next;
     m_terminalIsLineTemp = false;
+    m_terminalHeightInLines = m_displayHeight / m_terminalFontSize;
 
     return 0; // Success
 }

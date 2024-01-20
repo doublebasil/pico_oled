@@ -55,7 +55,7 @@ int main( void )
         printf("Booting\n");
     }
 
-    const uint32_t del = 1000;
+    const uint32_t del = 500;
     oled_terminalInit( 24, 0b1111100000000000U );
     oled_terminalWrite( "the" );
     sleep_ms( del );
@@ -63,13 +63,13 @@ int main( void )
     sleep_ms( del );
     oled_terminalWrite( "brown" );
     sleep_ms( del );
-    oled_terminalSetHeight( 2 );
+    // oled_terminalSetHeight( 2 );
     oled_terminalWrite( "fox" );
     sleep_ms( del );
     oled_terminalWrite( "jumps" );
     sleep_ms( del );
-    oled_terminalClear();
-    sleep_ms( del );
+    // oled_terminalClear();
+    // sleep_ms( del );
     oled_terminalWrite( "over" );
     sleep_ms( del );
     oled_terminalWrite( "the" );
