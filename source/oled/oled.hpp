@@ -292,6 +292,18 @@ int oled_terminalInit( uint8_t fontSize, uint16_t colour );
 bool oled_terminalIsInit( void );
 
 /*
+ * Function: oled_terminalSetHeight
+ * --------------------
+ * Set the max height of the terminal in lines. By default, the terminal init
+ * function will make the terminal as tall as possible.
+ *
+ * newHeightInLines: Maximum height of the terminal in lines
+ *
+ * returns: true if successful
+ */
+int oled_terminalSetHeight( uint8_t newHeightInLines );
+
+/*
  * Function: oled_terminalGetWidthInCharacters
  * --------------------
  * Return the width of the terminal in characters

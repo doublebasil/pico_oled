@@ -55,8 +55,30 @@ int main( void )
         printf("Booting\n");
     }
 
-    // oled_terminalInit( 24, 0b1111100000000000U );
-    // oled_terminalWrite( "Hello" );
+    const uint32_t del = 1000;
+    oled_terminalInit( 24, 0b1111100000000000U );
+    oled_terminalWrite( "the" );
+    sleep_ms( del );
+    oled_terminalWrite( "quick" );
+    sleep_ms( del );
+    oled_terminalWrite( "brown" );
+    sleep_ms( del );
+    oled_terminalSetHeight( 2 );
+    oled_terminalWrite( "fox" );
+    sleep_ms( del );
+    oled_terminalWrite( "jumps" );
+    sleep_ms( del );
+    oled_terminalClear();
+    sleep_ms( del );
+    oled_terminalWrite( "over" );
+    sleep_ms( del );
+    oled_terminalWrite( "the" );
+    sleep_ms( del );
+    oled_terminalWrite( "lazy" );
+    sleep_ms( del );
+    oled_terminalWrite( "dog" );
+    
+
     // oled_terminalWriteTemp( "world" );
     // sleep_ms( 1000 );
     // oled_terminalSetNewColour( 0b0000000000011111U );
