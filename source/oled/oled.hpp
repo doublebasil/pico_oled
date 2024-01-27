@@ -339,6 +339,19 @@ uint8_t oled_terminalGetHeightInCharacters();
 void oled_terminalWrite( const char text[] );
 
 /*
+ * Function: oled_terminalWriteNoScroll
+ * --------------------
+ * Write a line to the terminal
+ * If you are writing to the lowest line on the terminal, this funciton can be
+ * used to prevent the terminal from scrolling everything upwards to make room
+ *
+ * text: Text to be written to the display
+ *
+ * returns: void
+ */
+void oled_terminalWriteNoScroll( const char text[] );
+
+/*
  * Function: oled_terminalWrite
  * --------------------
  * Write a temporary line to the terminal, next time a line is written it will

@@ -55,29 +55,41 @@ int main( void )
         printf("Booting\n");
     }
 
-    const uint32_t del = 500;
+    const uint32_t del = 750;
     oled_terminalInit( 24, 0b1111100000000000U );
-    oled_terminalWrite( "the" );
-    sleep_ms( del );
-    oled_terminalWrite( "quick" );
-    sleep_ms( del );
-    oled_terminalWrite( "brown" );
-    sleep_ms( del );
-    // oled_terminalSetHeight( 2 );
-    oled_terminalWrite( "fox" );
-    sleep_ms( del );
-    oled_terminalWrite( "jumps" );
-    sleep_ms( del );
-    // oled_terminalClear();
+    // oled_terminalWrite( "the" );
     // sleep_ms( del );
-    oled_terminalWrite( "over" );
-    sleep_ms( del );
-    oled_terminalWrite( "the" );
-    sleep_ms( del );
-    oled_terminalWrite( "lazy" );
-    sleep_ms( del );
-    oled_terminalWrite( "dog" );
+    // oled_terminalWrite( "quick" );
+    // sleep_ms( del );
+    // oled_terminalWrite( "brown" );
+    // sleep_ms( del );
+    // // oled_terminalSetHeight( 2 );
+    // oled_terminalWrite( "fox" );
+    // sleep_ms( del );
+    // oled_terminalWrite( "jumps" );
+    // sleep_ms( del );
+    // // oled_terminalClear();
+    // // sleep_ms( del );
+    // oled_terminalWrite( "over" );
+    // sleep_ms( del );
+    // oled_terminalWrite( "the" );
+    // sleep_ms( del );
+    // oled_terminalWrite( "lazy" );
+    // sleep_ms( del );
+    // oled_terminalWrite( "dog" );
     
+
+    char text[30];
+    snprintf( text, sizeof( text ), "TermH=%d", oled_terminalGetHeightInCharacters() );
+    oled_terminalWrite("test1");
+    oled_terminalWrite(text);
+    oled_terminalWrite("test3");
+    sleep_ms( del );
+    oled_terminalSetLine( oled_terminalGetHeightInCharacters() ); // Move to end of terminal
+    oled_terminalWrite( "ABCDE" ); // Write something, the test1-3 will get scrolled up
+    sleep_ms( del );
+    oled_terminalSetLine( oled_terminalGetHeightInCharacters() ); // Ensure still at the end of the terminal
+    oled_terminalWriteNoScroll( "HIJKL" ); // Write something, Other things will not be scrolled
 
     // oled_terminalWriteTemp( "world" );
     // sleep_ms( 1000 );
@@ -99,9 +111,9 @@ int main( void )
     // sleep_ms( 500 );
     // oled_terminalWriteTemp( "ABCDEFG" );
 
-    gpio_init( 2 );
-    gpio_set_dir( 2, GPIO_IN );
-    oled_terminalInit( 24, 0xFFFFU );
+    // gpio_init( 2 );
+    // gpio_set_dir( 2, GPIO_IN );
+    // oled_terminalInit( 24, 0xFFFFU );
     
 
     // oled_drawLineBetweenPoints( 0, 0, 127, 127, 0b1111100000000000U, 0 );

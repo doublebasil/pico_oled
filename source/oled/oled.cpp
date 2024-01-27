@@ -1083,7 +1083,7 @@ uint8_t oled_terminalGetHeightInCharacters( void )
     if( m_terminalBitmapState == e_terminalUninitialised )
         return 0;
     else
-        return m_displayHeight / ( m_terminalFontTablePtr->Width + OLED_WRITE_TEXT_CHARACTER_GAP );
+        return m_displayHeight / ( m_terminalFontTablePtr->Height + OLED_WRITE_TEXT_CHARACTER_GAP );
 }
 
 void oled_terminalWrite( const char text[] )
@@ -1094,6 +1094,12 @@ void oled_terminalWrite( const char text[] )
     if( m_terminalCurrentLine < m_terminalHeightInLines )
         ++m_terminalCurrentLine;
     m_terminalIsLineTemp = false;
+}
+
+void oled_terminalWriteNoScroll( const char text[] )
+{
+    m_terminalIsLineTemp = true;
+    oled_terminalWrite( text );
 }
 
 void oled_terminalWriteTemp( const char text[] ) 
